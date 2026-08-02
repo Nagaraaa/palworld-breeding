@@ -88,13 +88,23 @@ async function loadPOI(){
     const g = REGIONS[reg].toGame(x, y);
     pts.push(Object.assign({ c, x, y, n, reg, mx: g.x, my: g.y }, extra || {}));
   };
-  /* voyage rapide, tours de guet, arènes de boss de tour */
-  arr(ft).forEach(p => {
-    const id = p.id || "";
-    if (/UnlockMapPoint/.test(p.class || "")) return push("tower", p.x, p.y, "Tour de guet — dévoile la carte");
-    if (/^Boss_|BOSS|LastBoss|_lab$/i.test(id)) return push("towerboss", p.x, p.y, prettyFT(id));
-    push("ft", p.x, p.y, prettyFT(id));
-  });
+  /* voyage rapide, tours de guet et tours de boss : liste complète nommée (poi.js) */
+  const CAT_FT = { F: "ft", W: "tower", T: "towerboss" };
+  if (typeof POI_FT !== "undefined"){
+    for (const reg of ["main", "tree"]){
+      POI_FT[reg].split("¤").forEach(e => {
+        const [t, gx, gy, nom] = e.split("|");
+        pts.push({ c: CAT_FT[t], reg, mx: +gx, my: +gy, n: nom, x: 0, y: 0, fixed: true });
+      });
+    }
+  } else {
+    arr(ft).forEach(p => {
+      const id = p.id || "";
+      if (/UnlockMapPoint/.test(p.class || "")) return push("tower", p.x, p.y, "Tour de guet");
+      if (/^Boss_|BOSS|LastBoss|_lab$/i.test(id)) return push("towerboss", p.x, p.y, prettyFT(id));
+      push("ft", p.x, p.y, prettyFT(id));
+    });
+  }
   arr(eff).forEach(p => push("effigy", p.x, p.y, "Statue de Pal Ancien"));
   arr(rel).forEach(p => push("relic", p.x, p.y, "Relique — " + (RELIC_FR[p.relic_type] || p.relic_type)));
   /* donjons */
@@ -126,7 +136,7 @@ async function loadPOI(){
       push("humanboss", b.x, b.y, "Boss — " + (nom || "humain"), { lv: b.level });
     }
   });
-  pts.forEach(p => { const g = REGIONS[p.reg].toGame(p.x, p.y); p.mx = g.x; p.my = g.y; });
+  pts.forEach(p => { if (p.fixed) return; const g = REGIONS[p.reg].toGame(p.x, p.y); p.mx = g.x; p.my = g.y; });
   return pts;
 }
 function prettyFT(id){
