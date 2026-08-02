@@ -65,6 +65,11 @@ function makePicker(containerId, labelText, onChange, opts = {}){
   return { get: () => value, set: (id, silent) => { if (id && PALS[id]) select(id, silent); } };
 }
 
+/* barre d'onglets : fond seulement quand on scrolle */
+const tabsBar = document.querySelector(".tabs");
+function updateTabsBar(){ tabsBar.classList.toggle("scrolled", scrollY > 30); }
+addEventListener("scroll", updateTabsBar, { passive: true });
+updateTabsBar();
 /* ==================== ONGLETS (View Transitions) ==================== */
 const TABS = ["breed", "parents", "path", "mine", "combos"];
 function switchTab(name){
