@@ -178,10 +178,7 @@ document.getElementById("swapAB").addEventListener("click", function(){
 
 /* ==================== 2. TROUVER LES PARENTS (index instantané + virtualisation) ==================== */
 const parentsOut = document.getElementById("parentsResult");
-let onlyOwned = false;
-document.getElementById("ownedFilter").addEventListener("click", function(){
-  onlyOwned = !onlyOwned; this.classList.toggle("on", onlyOwned); updateParents();
-});
+let parentsView = "all";   /* "all" | "owned" */
 let renderBatchState = null;
 function updateParents(){
   const t = pkChild.get();
@@ -193,25 +190,44 @@ function updateParents(){
     let pairs = (idx[t] || []).slice();
     const w = pkWith.get();
     if (w) pairs = pairs.filter(p => p[0] === w || p[1] === w);
-    if (onlyOwned) pairs = pairs.filter(p => owned.has(p[0]) && owned.has(p[1]));
-    const selfPair = pairs.find(p => p[0] === t && p[1] === t);
-    const specials = pairs.filter(p => p[2] && !(p[0] === t && p[1] === t));
-    const normals = pairs.filter(p => !p[2] && !(p[0] === t && p[1] === t));
+    const isOwnedPair = p => owned.has(p[0]) && owned.has(p[1]);
+    const ownedPairs = pairs.filter(isOwnedPair);
+    const shown = parentsView === "owned" ? ownedPairs : pairs;
+    const selfPair = shown.find(p => p[0] === t && p[1] === t);
+    const specials = shown.filter(p => p[2] && !(p[0] === t && p[1] === t));
+    const rest = shown.filter(p => !p[2] && !(p[0] === t && p[1] === t));
+    const restOwned = rest.filter(isOwnedPair), restOther = rest.filter(p => !isOwnedPair(p));
     let html = "";
     if (!pairs.length){
-      html = `<div class="warnbox">Aucune combinaison ${w ? "avec ce parent " : ""}${onlyOwned ? "avec tes pals " : ""}ne permet d'obtenir <b>${PALS[t].name}</b>${w || onlyOwned ? "" : " par croisement. Il faut le capturer ou trouver son œuf"}.</div>`;
-      parentsOut.innerHTML = html; return;
+      parentsOut.innerHTML = `<div class="warnbox">Aucune combinaison ${w ? "avec ce parent " : ""}ne permet d'obtenir <b>${PALS[t].name}</b>${w ? "" : " par croisement. Il faut le capturer ou trouver son œuf"}.</div>`;
+      return;
     }
-    html += `<div class="count-info"><b><span id="pairCount">0</span></b> combinaison(s) pour obtenir <b style="color:var(--accent)">${PALS[t].name}</b>${w ? ` avec <b>${PALS[w].name}</b>` : ""}${onlyOwned ? ` <span style="color:var(--ok)">parmi tes pals</span>` : ""} :</div>`;
-    if (selfPair) html += `<div class="infobox">💡 2 × <b>${PALS[t].name}</b> donnent toujours un <b>${PALS[t].name}</b>.</div>`;
-    html += `<div class="pairgrid" id="pairGrid"></div><div id="pairSentinel"></div>`;
+    /* sélecteur Tous / Mes pals */
+    html += `<div class="toolrow" style="margin-top:16px">
+      <div class="seg">
+        <button class="${parentsView === "all" ? "on" : ""}" data-view="all">Tous les combos <span class="cnt2">${pairs.length.toLocaleString("fr")}</span></button>
+        <button class="${parentsView === "owned" ? "on" : ""}" data-view="owned">✓ Avec mes pals <span class="cnt2">${ownedPairs.length.toLocaleString("fr")}</span></button>
+      </div>
+    </div>`;
+    if (parentsView === "owned" && !ownedPairs.length){
+      html += `<div class="infobox">Aucun combo réalisable avec tes pals cochés pour <b>${PALS[t].name}</b>.
+        Coche tes pals (ou importe ta sauvegarde) dans l'onglet <b>Mes Pals</b>, ou repasse sur « Tous les combos ».</div>`;
+    } else {
+      html += `<div class="count-info"><b><span id="pairCount">0</span></b> combinaison(s) pour obtenir <b style="color:var(--accent)">${PALS[t].name}</b>${w ? ` avec <b>${PALS[w].name}</b>` : ""}${parentsView === "owned" ? ` <span style="color:var(--ok)">réalisables avec tes pals</span>` : ""}${parentsView === "all" && ownedPairs.length ? ` — les <b style="color:var(--ok)">${ownedPairs.length}</b> réalisables avec tes pals sont en tête` : ""} :</div>`;
+      if (selfPair) html += `<div class="infobox">💡 2 × <b>${PALS[t].name}</b> donnent toujours un <b>${PALS[t].name}</b>.</div>`;
+      html += `<div class="pairgrid" id="pairGrid"></div><div id="pairSentinel"></div>`;
+    }
     parentsOut.innerHTML = html;
-    countUp(document.getElementById("pairCount"), pairs.length);
-    const ordered = [...specials, ...normals];
+    parentsOut.querySelectorAll(".seg [data-view]").forEach(b => b.addEventListener("click", () => {
+      parentsView = b.dataset.view; updateParents();
+    }));
+    if (parentsView === "owned" && !ownedPairs.length) return;
+    countUp(document.getElementById("pairCount"), shown.length);
+    const ordered = [...specials, ...restOwned, ...restOther];
     renderBatchState = { list: ordered, pos: 0, grid: document.getElementById("pairGrid") };
     renderNextBatch();
     const sentinel = document.getElementById("pairSentinel");
-    new IntersectionObserver(entries => {
+    if (sentinel) new IntersectionObserver(entries => {
       if (entries[0].isIntersecting) renderNextBatch();
     }, { rootMargin: "600px" }).observe(sentinel);
   });
