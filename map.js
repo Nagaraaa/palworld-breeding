@@ -68,10 +68,6 @@ async function loadLeaflet(){
     await loadCss("https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css");
     await loadJs("https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js");
   }
-  if (!window.L.markerClusterGroup){
-    await loadCss("https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css");
-    await loadJs("https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js").catch(() => {});
-  }
 }
 async function loadPOI(){
   const B = PSP_BASE;
@@ -186,88 +182,83 @@ function buildBackdrop(pts){
 }
 
 function buildMapUI(){
-  document.getElementById("mapFilters").innerHTML =
-    `<div class="chiprow" id="mapRegions">${Object.entries(REGIONS).map(([k, r]) => r.disabled
-        ? `<button class="chipf reg off" disabled title="Fond de carte indisponible pour l'instant">${r.label} <span class="cnt2">bientôt</span></button>`
-        : `<button class="chipf reg${mapRegion === k ? " on" : ""}" data-reg="${k}" style="--c:#f3ca63">${r.label}</button>`).join("")}</div>
-     <div class="chiprow" id="mapCats">${Object.entries(MAP_CATS).map(([k, c]) =>
-        `<button class="chipf${mapActive[k] ? " on" : ""}" data-cat="${k}" style="--c:${c.color}">${c.icon} ${c.label} <span class="cnt2" data-cnt="${k}">0</span></button>`).join("")}
-      <button class="chipf" id="mapAll">Tout afficher</button><button class="chipf" id="mapNone">Tout masquer</button></div>
-     <input type="text" class="searchbar" id="mapSearch" placeholder="Filtrer (ex. « donjon », « relique capture », « Anubis »)…">`;
+  const counts = {};
+  mapPOI.forEach(p => (counts[p.reg] = counts[p.reg] || {})[p.c] = ((counts[p.reg] || {})[p.c] || 0) + 1);
+
+  document.getElementById("mapFilters").innerHTML = `
+    <div class="maptop">
+      <div class="regsel" id="mapRegions">
+        ${Object.entries(REGIONS).map(([k, r]) =>
+          `<button class="regbtn${mapRegion === k ? " on" : ""}" data-reg="${k}">${r.label}</button>`).join("")}
+      </div>
+      <input type="text" class="mapsearch" id="mapSearch" placeholder="🔍 Rechercher un lieu, un alpha, une relique…">
+    </div>
+    <div class="legend">
+      <div class="legend-head">
+        <span class="legend-title">Filtres</span>
+        <div class="legend-acts">
+          <button class="legbtn" id="mapAll">Tout afficher</button>
+          <button class="legbtn" id="mapNone">Tout masquer</button>
+        </div>
+      </div>
+      <div class="legend-grid">
+        ${Object.entries(MAP_CATS).map(([k, c]) => `
+          <button class="legitem${mapActive[k] ? " on" : ""}" data-cat="${k}" style="--c:${c.color}">
+            <span class="legico">${c.img ? `<img src="${c.img}" alt="">` : c.icon}</span>
+            <span class="legtxt">${c.label}</span>
+            <span class="legcnt" data-cnt="${k}">0</span>
+          </button>`).join("")}
+      </div>
+    </div>`;
 
   mapObj = L.map("mapCanvas", { crs: L.CRS.Simple, minZoom: 1, maxZoom: 7, zoomSnap: .5, zoomDelta: .5,
-    attributionControl: false, maxBounds: TILE_BOUNDS, maxBoundsViscosity: .9 });
+    attributionControl: false, maxBounds: TILE_BOUNDS, maxBoundsViscosity: .9, zoomControl: true });
   const info = document.getElementById("mapCoords");
   mapObj.on("mousemove", e => {
     const R = REGIONS[mapRegion];
-    const gx = Math.round((e.latlng.lng - R.toPix(0, 0)[1]) / (R.toPix(1, 0)[1] - R.toPix(0, 0)[1]));
-    const gy = Math.round((e.latlng.lat - R.toPix(0, 0)[0]) / (R.toPix(0, 1)[0] - R.toPix(0, 0)[0]));
-    info.textContent = `Coordonnées in-game : ${gx}, ${gy}`;
+    const o = R.toPix(0, 0), ux = R.toPix(1, 0)[1] - o[1], uy = R.toPix(0, 1)[0] - o[0];
+    info.textContent = `${Math.round((e.latlng.lng - o[1]) / ux)}, ${Math.round((e.latlng.lat - o[0]) / uy)}`;
+  });
+  /* les marqueurs restent lisibles : on grossit légèrement avec le zoom */
+  mapObj.on("zoomend", () => {
+    const z = mapObj.getZoom();
+    document.getElementById("mapCanvas").classList.toggle("zoomed", z >= 4);
   });
 
   document.querySelectorAll("#mapRegions [data-reg]").forEach(b => b.addEventListener("click", () => {
+    if (mapRegion === b.dataset.reg) return;
     mapRegion = b.dataset.reg;
     try { localStorage.setItem("pw_map_region", mapRegion); } catch(e){}
     document.querySelectorAll("#mapRegions [data-reg]").forEach(x => x.classList.toggle("on", x === b));
     switchRegion();
   }));
-  document.querySelectorAll("#mapCats [data-cat]").forEach(b => b.addEventListener("click", () => {
-    mapActive[b.dataset.cat] = !mapActive[b.dataset.cat];
-    b.classList.toggle("on", mapActive[b.dataset.cat]);
+  document.querySelectorAll(".legend [data-cat]").forEach(b => b.addEventListener("click", () => {
+    const k = b.dataset.cat;
+    mapActive[k] = !mapActive[k];
+    b.classList.toggle("on", mapActive[k]);
     try { localStorage.setItem("pw_map_cats", JSON.stringify(mapActive)); } catch(e){}
-    drawMarkers();
+    applyLayerVisibility();
   }));
   document.getElementById("mapAll").addEventListener("click", () => setAllCats(true));
   document.getElementById("mapNone").addEventListener("click", () => setAllCats(false));
-  document.getElementById("mapSearch").addEventListener("input", function(){ mapQuery = norm(this.value); drawMarkers(); });
+  let deb;
+  document.getElementById("mapSearch").addEventListener("input", function(){
+    clearTimeout(deb);
+    const v = this.value;
+    deb = setTimeout(() => { mapQuery = norm(v); buildLayers(); }, 200);
+  });
   switchRegion();
 }
 function setAllCats(v){
   Object.keys(MAP_CATS).forEach(k => mapActive[k] = v);
-  document.querySelectorAll("#mapCats [data-cat]").forEach(b => b.classList.toggle("on", v));
+  document.querySelectorAll(".legend [data-cat]").forEach(b => b.classList.toggle("on", v));
   try { localStorage.setItem("pw_map_cats", JSON.stringify(mapActive)); } catch(e){}
-  drawMarkers();
-}
-function setBgNote(txt){
-  const el = document.getElementById("mapSource");
-  if (el) el.innerHTML = txt;
-}
-function useGenerated(){
-  const pts = mapPOI.filter(p => p.reg === mapRegion).map(p => {
-    const [lat, lng] = REGIONS[mapRegion].toPix(p.mx, p.my); return { lat, lng }; });
-  if (!pts.length) return;
-  const bg = buildBackdrop(pts);
-  if (tileLayer) mapObj.removeLayer(tileLayer);
-  tileLayer = L.imageOverlay(bg.url, bg.bounds, { opacity: .95, className: "mapbg" }).addTo(mapObj);
-  setBgNote(`Fond <b>généré</b> à partir des points d'intérêt — dépose <code>${REGIONS[mapRegion].img}</code> à la racine du site pour un vrai visuel`);
-}
-function useTiles(){
-  let failed = 0, ok = 0, retried = 0;
-  /* maxNativeZoom réduit : moins de tuiles demandées d'un coup, donc moins de rejets du CDN */
-  tileLayer = L.tileLayer(REGIONS[mapRegion].tiles, { minZoom: 1, minNativeZoom: 1, maxZoom: 7, maxNativeZoom: 4,
-    tileSize: 512, noWrap: true, bounds: TILE_BOUNDS, className: "mapbg", keepBuffer: 2 });
-  tileLayer.on("tileload", () => ok++);
-  tileLayer.on("tileerror", e => {
-    failed++;
-    const t = e.tile;
-    if (!t) return;
-    const n = +(t.dataset.retry || 0);
-    if (n < 2){                                   /* le CDN rejette par rafales : on réessaie */
-      t.dataset.retry = n + 1; retried++;
-      const base = t.src.split("#")[0];
-      setTimeout(() => { t.src = base + "#r" + (n + 1); }, 400 * (n + 1));
-      return;
-    }
-    if (failed - retried >= 6 && failed > ok) useGenerated();   /* trop d'échecs définitifs */
-  });
-  tileLayer.addTo(mapObj);
-  setBgNote(`Fond : cartes du jeu via <a href="https://paldb.cc" target="_blank">paldb.cc</a> (mises en cache sur ce site)`);
+  applyLayerVisibility();
 }
 function switchRegion(){
   if (tileLayer){ mapObj.removeLayer(tileLayer); tileLayer = null; }
   mapObj.setMaxBounds([[-560, -50], [50, 560]]);
   mapObj.setView([-256, 256], 1);
-  /* 1) image déposée localement, 2) tuiles du jeu, 3) fond généré */
   const local = new Image();
   local.onload = () => {
     tileLayer = L.imageOverlay(local.src, TILE_BOUNDS, { opacity: .96, className: "mapbg" }).addTo(mapObj);
@@ -275,46 +266,51 @@ function switchRegion(){
   };
   local.onerror = () => useTiles();
   local.src = REGIONS[mapRegion].img;
-  drawMarkers();
+  buildLayers();
 }
-function drawMarkers(){
+/* une couche par catégorie, créée une seule fois par région/recherche */
+function buildLayers(){
   if (!mapObj) return;
-  Object.values(mapLayers).forEach(l => mapObj.removeLayer(l));
+  Object.values(mapLayers).forEach(l => { if (mapObj.hasLayer(l)) mapObj.removeLayer(l); });
   mapLayers = {};
   const R = REGIONS[mapRegion];
   const inReg = mapPOI.filter(p => p.reg === mapRegion);
   const counts = {};
   inReg.forEach(p => counts[p.c] = (counts[p.c] || 0) + 1);
   document.querySelectorAll("[data-cnt]").forEach(el => el.textContent = counts[el.dataset.cnt] || 0);
-  let n = 0;
-  const useCluster = !!L.markerClusterGroup;
+
   for (const cat in MAP_CATS){
-    if (!mapActive[cat]) continue;
     const c = MAP_CATS[cat];
     const pts = inReg.filter(p => p.c === cat && (!mapQuery || norm(p.n + " " + c.label).includes(mapQuery)));
-    if (!pts.length) continue;
-    n += pts.length;
-    const layer = useCluster
-      ? L.markerClusterGroup({ maxClusterRadius: z => z >= 4 ? 18 : 42, showCoverageOnHover: false,
-          chunkedLoading: true, iconCreateFunction: cl => L.divIcon({ className: "poicluster",
-            html: `<span style="--c:${c.color}">${cl.getChildCount()}</span>`, iconSize: [32, 32] }) })
-      : L.layerGroup();
+    const layer = L.layerGroup();
     for (const p of pts){
       const [lat, lng] = R.toPix(p.mx, p.my);
-      let inner;
-      if (c.pal && p.pid) inner = `<img src="https://palworld.kimpton.io/icons/pals/${p.pid}.png" alt="">`;
-      else if (c.img) inner = `<img src="${c.img}" alt="" onerror="this.replaceWith(document.createTextNode('${c.icon}'))">`;
-      else inner = c.icon;
-      const mk = L.marker([lat, lng], { icon: L.divIcon({ className: "poimk",
-        html: `<span style="--c:${c.color}">${inner}</span>`, iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -12] }) });
-      mk.bindPopup(`<b>${p.n}</b>${p.lv ? ` <span class="poplv">Nv.${p.lv}</span>` : ""}
-        <br><span class="popc">${c.label} · coordonnées in-game <b>${p.mx}, ${p.my}</b></span>`);
-      layer.addLayer(mk);
+      const img = (c.pal && p.pid) ? `https://palworld.kimpton.io/icons/pals/${p.pid}.png` : c.img;
+      const cls = "pmk" + (c.pal ? " pal" : "");
+      const html = img
+        ? `<img class="${cls}" src="${img}" alt="" style="--c:${c.color}" onerror="this.outerHTML='<span class=\'${cls} emo\' style=\'--c:${c.color}\'>${c.icon}</span>'">`
+        : `<span class="${cls} emo" style="--c:${c.color}">${c.icon}</span>`;
+      L.marker([lat, lng], { icon: L.divIcon({ className: "pmkwrap", html, iconSize: [24, 24], iconAnchor: [12, 12], popupAnchor: [0, -14] }), riseOnHover: true })
+        .bindPopup(`<b>${p.n}</b>${p.lv ? ` <span class="poplv">Nv.${p.lv}</span>` : ""}
+          <br><span class="popc">${c.label} · <b>${p.mx}, ${p.my}</b></span>`)
+        .addTo(layer);
     }
-    layer.addTo(mapObj);
     mapLayers[cat] = layer;
   }
+  applyLayerVisibility();
+}
+function applyLayerVisibility(){
+  let n = 0;
+  for (const cat in mapLayers){
+    const l = mapLayers[cat];
+    const nb = l.getLayers().length;
+    if (mapActive[cat]){
+      if (!mapObj.hasLayer(l)) l.addTo(mapObj);
+      n += nb;
+    } else if (mapObj.hasLayer(l)) mapObj.removeLayer(l);
+  }
+  const total = mapPOI.filter(p => p.reg === mapRegion).length;
   const st = document.getElementById("mapStatus");
-  if (st) st.innerHTML = `<div class="count-info">🗺️ <b>${n.toLocaleString("fr")}</b> points affichés sur <b>${inReg.length.toLocaleString("fr")}</b> dans cette région
-    · ${mapPOI.length.toLocaleString("fr")} au total · clique un marqueur pour ses coordonnées in-game</div>`;
+  if (st) st.innerHTML = `<div class="count-info"><b>${n.toLocaleString("fr")}</b> points affichés
+    sur ${total.toLocaleString("fr")} dans cette région · ${mapPOI.length.toLocaleString("fr")} au total</div>`;
 }

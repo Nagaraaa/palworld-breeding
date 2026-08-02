@@ -323,23 +323,19 @@ main{animation:fade .6s .35s backwards;}
 .dexrank{position:absolute; bottom:6px; right:8px; font-size:10px; color:var(--muted); opacity:.8;}
 
 /* marqueurs & clusters */
-.poimk span{display:flex; align-items:center; justify-content:center; width:26px; height:26px; font-size:12px;
-  border-radius:50%; background:color-mix(in srgb, var(--c) 22%, #0d1420); border:1.5px solid var(--c);
-  box-shadow:0 2px 8px rgba(0,0,0,.5); transition:transform .12s; overflow:hidden; padding:2px;}
-.poimk span img{width:100%; height:100%; object-fit:contain; display:block; pointer-events:none;}
-.poimk:hover span{transform:scale(1.3); z-index:5;}
+
+
+
 .leaflet-popup-content .poplv{color:var(--accent); font-size:11px; font-weight:700;}
-.poicluster span{display:flex; align-items:center; justify-content:center; width:30px; height:30px;
-  border-radius:50%; background:color-mix(in srgb, var(--c) 26%, #0d1420); border:2px solid var(--c);
-  color:#fff; font-size:12px; font-weight:700; box-shadow:0 3px 10px rgba(0,0,0,.55);}
+
 .mapbg{image-rendering:auto; filter:saturate(.9) contrast(1.05);}
 .gridlbl{color:rgba(94,234,212,.35); font-size:9.5px; font-family:inherit; pointer-events:none; white-space:nowrap;}
 .leaflet-popup-content .popc{opacity:.8; font-size:12px;}
 #mapCanvas{height:min(72vh,660px);}
 .tabs{z-index:600;}
 
-.chipf.reg{font-size:13px; padding:7px 15px;}
-.chipf.reg.on{background:rgba(243,202,99,.16); color:var(--accent); border-color:var(--accent);}
+
+
 .mapbg{filter:saturate(.85) brightness(.92) contrast(1.05);}
 .leaflet-container{outline:none;}
 
@@ -348,8 +344,8 @@ header h1{font-size:clamp(28px,5vw,42px); letter-spacing:-.5px; font-weight:800;
 .brand{background:linear-gradient(100deg,var(--accent) 0%,#ffe6a3 40%,var(--accent2) 100%);
   -webkit-background-clip:text; background-clip:text; color:transparent;}
 .brand-dot{color:var(--accent2); -webkit-text-fill-color:var(--accent2);}
-.chipf.reg.off{opacity:.45; cursor:not-allowed;}
-.chipf.reg.off:hover{border-color:var(--border); color:var(--muted);}
+
+
 
 .credit{color:var(--accent2); font-weight:700;}
 footer{padding:24px 20px 32px;}
@@ -386,3 +382,54 @@ footer{padding:24px 20px 32px;}
 .metalbl{font-size:10.5px; text-transform:uppercase; letter-spacing:1px; color:var(--muted);
   display:block; margin-bottom:7px;}
 .metapals .mv{color:var(--accent); font-size:11px; margin-left:5px;}
+
+/* ==================== CARTE — refonte lisible ==================== */
+.maptop{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:16px 0 12px;}
+.regsel{display:inline-flex; background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:4px; gap:4px;}
+.regbtn{background:transparent; border:none; color:var(--muted); padding:9px 18px; border-radius:9px;
+  cursor:pointer; font-size:13.5px; font-family:inherit; white-space:nowrap; transition:background .18s, color .18s;}
+.regbtn:hover{color:var(--text); background:rgba(255,255,255,.04);}
+.regbtn.on{background:var(--accent); color:#1a1405; font-weight:600;}
+.mapsearch{flex:1; min-width:220px; background:var(--bg2); border:1px solid var(--border); color:var(--text);
+  border-radius:12px; padding:11px 15px; font-size:14px; font-family:inherit; outline:none; transition:border-color .18s;}
+.mapsearch:focus{border-color:var(--accent);}
+.mapsearch::placeholder{color:var(--muted);}
+
+.legend{background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:14px 16px 16px; margin-bottom:14px;}
+.legend-head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; flex-wrap:wrap;}
+.legend-title{font-size:11px; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); font-weight:600;}
+.legend-acts{display:flex; gap:8px;}
+.legbtn{background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:8px;
+  padding:5px 12px; font-size:11.5px; cursor:pointer; font-family:inherit; transition:.15s;}
+.legbtn:hover{border-color:var(--accent2); color:var(--accent2);}
+.legend-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(215px,1fr)); gap:9px;}
+.legitem{display:flex; align-items:center; gap:10px; background:var(--card2); border:1px solid var(--border);
+  border-radius:11px; padding:9px 12px; cursor:pointer; font-family:inherit; text-align:left;
+  transition:border-color .18s, background .18s, opacity .18s; opacity:.42;}
+.legitem:hover{opacity:.75; border-color:var(--c);}
+.legitem.on{opacity:1; border-color:var(--c); background:color-mix(in srgb, var(--c) 10%, var(--card2));}
+.legico{width:26px; height:26px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:15px;}
+.legico img{width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));}
+.legtxt{flex:1; font-size:12.5px; color:var(--text); line-height:1.25;}
+.legcnt{font-size:11px; font-weight:700; color:var(--c); background:rgba(0,0,0,.28); border-radius:7px; padding:2px 8px;}
+
+/* marqueurs : icônes nues, sans pastille */
+.pmkwrap{background:none !important; border:none !important;}
+.pmk{width:24px; height:24px; display:block; object-fit:contain;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.9)) drop-shadow(0 0 1px rgba(0,0,0,.8));
+  transition:transform .12s; cursor:pointer;}
+.pmk.pal{border-radius:50%; background:rgba(10,14,22,.75); border:1.5px solid var(--c); padding:1px;
+  box-shadow:0 2px 6px rgba(0,0,0,.6);}
+.pmk.emo{display:flex; align-items:center; justify-content:center; font-size:15px; line-height:1;}
+.pmkwrap:hover .pmk{transform:scale(1.45); z-index:400;}
+#mapCanvas.zoomed .pmk{width:30px; height:30px;}
+.leaflet-marker-icon{will-change:transform;}
+.leaflet-popup-content b{font-size:13.5px;}
+.leaflet-popup-content .poplv{color:var(--accent); font-size:11.5px; font-weight:700;}
+.leaflet-popup-content .popc{opacity:.75; font-size:11.5px;}
+.mapinfo{left:auto; right:10px; bottom:10px; font-variant-numeric:tabular-nums;}
+@media (max-width:640px){
+  .legend-grid{grid-template-columns:1fr 1fr;}
+  .legtxt{font-size:11.5px;}
+  .regbtn{padding:8px 12px; font-size:12.5px;}
+}
