@@ -160,7 +160,7 @@ function buildMapUI(){
       <button class="chipf" id="mapAll">Tout afficher</button><button class="chipf" id="mapNone">Tout masquer</button></div>
      <input type="text" class="searchbar" id="mapSearch" placeholder="Filtrer (ex. « donjon », « relique capture », « Anubis »)…">`;
 
-  mapObj = L.map("mapCanvas", { crs: L.CRS.Simple, minZoom: 1, maxZoom: 6, zoomSnap: .5, zoomDelta: .5,
+  mapObj = L.map("mapCanvas", { crs: L.CRS.Simple, minZoom: 1, maxZoom: 7, zoomSnap: .5, zoomDelta: .5,
     attributionControl: false, maxBounds: TILE_BOUNDS, maxBoundsViscosity: .9 });
   const info = document.getElementById("mapCoords");
   mapObj.on("mousemove", e => {
@@ -209,7 +209,7 @@ function useGenerated(){
 function useTiles(){
   let failed = 0, ok = 0, retried = 0;
   /* maxNativeZoom réduit : moins de tuiles demandées d'un coup, donc moins de rejets du CDN */
-  tileLayer = L.tileLayer(REGIONS[mapRegion].tiles, { minZoom: 1, minNativeZoom: 1, maxZoom: 6, maxNativeZoom: 6,
+  tileLayer = L.tileLayer(REGIONS[mapRegion].tiles, { minZoom: 1, minNativeZoom: 1, maxZoom: 7, maxNativeZoom: 4,
     tileSize: 512, noWrap: true, bounds: TILE_BOUNDS, className: "mapbg", keepBuffer: 2 });
   tileLayer.on("tileload", () => ok++);
   tileLayer.on("tileerror", e => {
