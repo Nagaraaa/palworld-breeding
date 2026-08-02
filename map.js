@@ -158,7 +158,7 @@ function buildMapUI(){
       <button class="chipf" id="mapAll">Tout afficher</button><button class="chipf" id="mapNone">Tout masquer</button></div>
      <input type="text" class="searchbar" id="mapSearch" placeholder="Filtrer (ex. « donjon », « relique capture », « Anubis »)…">`;
 
-  mapObj = L.map("mapCanvas", { crs: L.CRS.Simple, minZoom: 0, maxZoom: 6, zoomSnap: .5,
+  mapObj = L.map("mapCanvas", { crs: L.CRS.Simple, minZoom: 1, maxZoom: 6, zoomSnap: .5, zoomDelta: .5,
     attributionControl: false, maxBounds: TILE_BOUNDS, maxBoundsViscosity: .9 });
   const info = document.getElementById("mapCoords");
   mapObj.on("mousemove", e => {
@@ -194,8 +194,8 @@ function setAllCats(v){
 function switchRegion(){
   if (tileLayer){ mapObj.removeLayer(tileLayer); tileLayer = null; }
   let failed = 0;
-  tileLayer = L.tileLayer(REGIONS[mapRegion].tiles, { minZoom: 0, maxZoom: 6, maxNativeZoom: 8,
-    tileSize: 512, noWrap: true, bounds: TILE_BOUNDS, className: "mapbg" });
+  tileLayer = L.tileLayer(REGIONS[mapRegion].tiles, { minZoom: 1, minNativeZoom: 1, maxZoom: 6, maxNativeZoom: 6,
+    tileSize: 512, noWrap: true, bounds: TILE_BOUNDS, className: "mapbg", keepBuffer: 3 });
   tileLayer.on("tileerror", () => {
     if (++failed !== 4) return;                       /* fond de secours généré */
     mapObj.removeLayer(tileLayer); tileLayer = null;
@@ -206,8 +206,8 @@ function switchRegion(){
     tileLayer = L.imageOverlay(bg.url, bg.bounds, { opacity: .95, className: "mapbg" }).addTo(mapObj);
   });
   tileLayer.addTo(mapObj);
-  mapObj.setMaxBounds(TILE_BOUNDS);
-  mapObj.fitBounds(TILE_BOUNDS);
+  mapObj.setMaxBounds([[-560, -50], [50, 560]]);
+  mapObj.setView([-256, 256], 1);
   drawMarkers();
 }
 function drawMarkers(){
