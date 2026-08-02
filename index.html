@@ -30,24 +30,24 @@
 
 <nav class="tabs">
   <div class="navgrp"><span class="navlbl">Pal-Lab</span>
-    <button class="tab" data-tab="home">🏠 Accueil</button>
+    <button class="tab" data-tab="home" data-ico="home" data-ico-size="17"><span class="tlbl">Accueil</span></button>
   </div>
   <div class="navgrp"><span class="navlbl">Élevage</span>
-    <button class="tab active" data-tab="want">🎯 Je veux ce pal</button>
-    <button class="tab" data-tab="breed">💞 Croiser</button>
-    <button class="tab" data-tab="path">🧭 Chemin</button>
-    <button class="tab" data-tab="combos">✨ Combos</button>
+    <button class="tab active" data-tab="want" data-ico="target" data-ico-size="17"><span class="tlbl">Je veux ce pal</span></button>
+    <button class="tab" data-tab="breed" data-ico="breed" data-ico-size="17"><span class="tlbl">Croiser</span></button>
+    <button class="tab" data-tab="path" data-ico="path" data-ico-size="17"><span class="tlbl">Chemin</span></button>
+    <button class="tab" data-tab="combos" data-ico="spark" data-ico-size="17"><span class="tlbl">Combos</span></button>
   </div>
   <div class="navgrp"><span class="navlbl">Pals</span>
-    <button class="tab" data-tab="dex">📖 Paldex</button>
-    <button class="tab" data-tab="passives">🧬 Passifs</button>
-    <button class="tab" data-tab="meta">🏆 Meta</button>
+    <button class="tab" data-tab="dex" data-ico="book" data-ico-size="17"><span class="tlbl">Paldex</span></button>
+    <button class="tab" data-tab="passives" data-ico="dna" data-ico-size="17"><span class="tlbl">Passifs</span></button>
+    <button class="tab" data-tab="meta" data-ico="trophy" data-ico-size="17"><span class="tlbl">Meta</span></button>
   </div>
   <div class="navgrp"><span class="navlbl">Monde</span>
-    <button class="tab" data-tab="map">🗺️ Carte</button>
+    <button class="tab" data-tab="map" data-ico="map" data-ico-size="17"><span class="tlbl">Carte</span></button>
   </div>
   <div class="navgrp"><span class="navlbl">Moi</span>
-    <button class="tab" data-tab="mine">🎒 Mes Pals<span class="cnt" id="ownedCnt">0</span></button>
+    <button class="tab" data-tab="mine" data-ico="bag" data-ico-size="17"><span class="tlbl">Mes Pals</span><span class="cnt" id="ownedCnt">0</span></button>
   </div>
 </nav>
 
@@ -59,8 +59,8 @@
       <p class="hero-sub">Tous les croisements du jeu, ton Paldex, les builds meta et la carte —
       au même endroit, en français, et connecté à <b>ta</b> sauvegarde.</p>
       <div class="hero-cta">
-        <button class="btn-primary" data-go="want">🎯 Je veux ce pal</button>
-        <button class="btn-ghost" data-go="mine">🎒 Importer ma sauvegarde</button>
+        <button class="btn-primary" data-go="want" data-ico="target" data-ico-size="17"><span class="tlbl">Je veux ce pal</span></button>
+        <button class="btn-ghost" data-go="mine" data-ico="save"><span>Importer ma sauvegarde</span></button>
       </div>
       <div class="hero-stats">
         <div class="hstat"><b data-count="300">0</b><span>pals</span></div>
@@ -72,32 +72,32 @@
 
     <div class="feat-grid">
       <button class="feat" data-go="want" style="--fc:#f3ca63">
-        <span class="feat-ico">🎯</span>
+        <span class="feat-ico" data-ico="target" data-ico-size="26"></span>
         <b>Je veux ce pal</b>
         <span>Toutes les paires de parents pour l'obtenir, triées selon ce que tu possèdes déjà.</span>
       </button>
       <button class="feat" data-go="breed" style="--fc:#f472b6">
-        <span class="feat-ico">💞</span>
+        <span class="feat-ico" data-ico="breed" data-ico-size="26"></span>
         <b>Croiser deux pals</b>
         <span>L'enfant exact, combos spéciaux et couple selon le genre inclus.</span>
       </button>
       <button class="feat" data-go="path" style="--fc:#5eead4">
-        <span class="feat-ico">🧭</span>
+        <span class="feat-ico" data-ico="path" data-ico-size="26"></span>
         <b>Chemin le plus court</b>
         <span>Le nombre minimal de croisements entre deux espèces, étape par étape.</span>
       </button>
       <button class="feat" data-go="dex" style="--fc:#38bdf8">
-        <span class="feat-ico">📖</span>
+        <span class="feat-ico" data-ico="book" data-ico-size="26"></span>
         <b>Paldex complet</b>
         <span>Éléments, aptitudes, stats. Trie par « Allumage 8 » et trouve ton ouvrier idéal.</span>
       </button>
       <button class="feat" data-go="meta" style="--fc:#a78bfa">
-        <span class="feat-ico">🏆</span>
+        <span class="feat-ico" data-ico="trophy" data-ico-size="26"></span>
         <b>Builds meta</b>
         <span>Les 4 passifs à viser par rôle : ouvrier, monture, combat, ranch, élevage.</span>
       </button>
       <button class="feat" data-go="map" style="--fc:#4ade80">
-        <span class="feat-ico">🗺️</span>
+        <span class="feat-ico" data-ico="map" data-ico-size="26"></span>
         <b>Carte interactive</b>
         <span>Voyage rapide, donjons, alphas et reliques sur les deux cartes du jeu.</span>
       </button>
@@ -105,17 +105,17 @@
 
     <div class="hero-guild">
       <div>
-        <b>🤝 Pensé pour une guilde</b>
+        <b><span data-ico="users" data-ico-size="18"></span> Pensé pour une guilde</b>
         <p>Importe le <code>Level.sav</code> de ton serveur (ou branche l'API Nitrado), choisis les membres de ta
         guilde et Pal-Lab calcule ce que <b>vous</b> pouvez élever ensemble — avec le plan étape par étape.</p>
       </div>
-      <button class="btn-ghost" data-go="mine">Configurer ma collection →</button>
+      <button class="btn-ghost" data-go="mine"><span>Configurer ma collection</span><span data-ico="arrow" data-ico-size="16"></span></button>
     </div>
   </section>
 
   <section id="tab-want">
     <div class="card">
-      <h2>🎯 Je veux ce pal — toutes les façons de l'obtenir</h2>
+      <h2 data-ico="target" data-ico-size="19">Je veux ce pal — toutes les façons de l'obtenir</h2>
       <div class="sub">Choisis le pal que tu veux obtenir : je te montre <b>toutes les paires de parents</b> qui le donnent,
       ce que tu peux faire dès maintenant avec ta collection, et le chemin le plus court depuis tes pals.</div>
       <div class="pickers">
@@ -128,7 +128,7 @@
 
   <section id="tab-breed">
     <div class="card">
-      <h2>Croiser 2 pals</h2>
+      <h2 data-ico="breed" data-ico-size="19">Croiser 2 pals</h2>
       <div class="sub">Choisis deux parents pour voir leur enfant. Réutilise l'enfant pour enchaîner les générations.</div>
       <div class="pickers">
         <div class="picker" id="pkA"></div>
@@ -143,7 +143,7 @@
 
   <section id="tab-path">
     <div class="card">
-      <h2>Chemin le plus court</h2>
+      <h2 data-ico="path" data-ico-size="19">Chemin le plus court</h2>
       <div class="sub">Nombre minimal de croisements pour passer d'un pal à un autre. L'enfant de chaque étape devient parent de la suivante.</div>
       <div class="pickers">
         <div class="picker" id="pkFrom"></div>
@@ -195,7 +195,7 @@
 
   <section id="tab-combos">
     <div class="card">
-      <h2>Combos spéciaux &amp; pals uniques</h2>
+      <h2 data-ico="spark" data-ico-size="19">Combos spéciaux & pals uniques</h2>
       <div class="sub">Toutes les combinaisons qui ne suivent pas la règle de puissance : combos spéciaux (variantes), couple dépendant du genre, et pals uniquement obtenables avec deux parents identiques.</div>
       <input type="text" class="searchbar" id="comboSearch" placeholder="Filtrer…">
       <div id="comboContent"></div>
@@ -204,7 +204,7 @@
 
   <section id="tab-dex">
     <div class="card">
-      <h2>📖 Paldex — <span id="dexCount">…</span> pals</h2>
+      <h2 data-ico="book" data-ico-size="19">Paldex — <span id="dexCount">…</span> pals</h2>
       <div class="sub">Fiches complètes : éléments, aptitudes de travail, statistiques, rareté, prix. Clique un pal pour tout voir.</div>
       <div id="dexFilters"></div>
       <div class="dexgrid" id="dexGrid"></div>
@@ -213,7 +213,7 @@
 
   <section id="tab-passives">
     <div class="card">
-      <h2>🧬 Compétences passives — <span id="passCount">…</span></h2>
+      <h2 data-ico="dna" data-ico-size="19">Compétences passives — <span id="passCount">…</span></h2>
       <div class="sub">Les 114 passifs que peuvent porter tes pals, classés par rang. Cherche par nom ou par effet
       (« attaque », « travail », « monture »…).</div>
       <div id="passFilters"></div>
@@ -223,7 +223,7 @@
 
   <section id="tab-meta">
     <div class="card">
-      <h2>🏆 Meta — les builds de passifs qui comptent</h2>
+      <h2 data-ico="trophy" data-ico-size="19">Meta — les builds de passifs qui comptent</h2>
       <div class="sub">Les combinaisons de 4 passifs à viser selon le rôle du pal (un pal en porte 4 maximum).
       Effets vérifiés sur les données du jeu · méta Palworld 1.0. Clique un passif pour le retrouver dans la liste complète,
       ou un pal conseillé pour ouvrir sa fiche.</div>
@@ -238,7 +238,7 @@
 
   <section id="tab-map">
     <div class="card">
-      <h2>🗺️ Carte interactive</h2>
+      <h2 data-ico="map" data-ico-size="19">Carte interactive</h2>
       <div class="sub">Les deux cartes du jeu — <b>Îles Palpagos</b> et <b>Arbre-Monde</b> — avec voyage rapide, tours de guet, statues de Pal Ancien, donjons, alphas (nommés), prédateurs et reliques. Clique un marqueur pour ses coordonnées in-game.</div>
       <div id="mapStatus"></div>
       <div id="mapFilters"></div>
@@ -262,6 +262,7 @@
 </footer>
 <div class="workerstate" id="workerState"></div>
 
+<script src="icons.js"></script>
 <script src="ooz.js"></script>
 <script src="data.js"></script>
 <script src="core.js"></script>

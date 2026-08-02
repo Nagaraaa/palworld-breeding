@@ -50,8 +50,8 @@ let mapInit = false, mapPOI = null, mapActive = {}, mapObj = null, mapLayers = {
     mapRegion = "main", mapQuery = "", tileLayer = null, bossNames = null;
 /* affichés par défaut : les repères utiles ; les catégories très nombreuses restent à activer */
 const CATS_DEFAUT = { ft: true, tower: true, towerboss: true, dungeon: true, alpha: true,
-                      effigy: false, predator: false, humanboss: false, relic: false };
-try { mapActive = JSON.parse(localStorage.getItem("pw_map_cats2") || "null") || {}; } catch(e){}
+                      effigy: true, predator: true, humanboss: false, relic: false };
+try { mapActive = JSON.parse(localStorage.getItem("pw_map_cats3") || "null") || {}; } catch(e){}
 Object.keys(MAP_CATS).forEach(k => { if (!(k in mapActive)) mapActive[k] = CATS_DEFAUT[k] !== false; });
 try { mapRegion = localStorage.getItem("pw_map_region") || "main"; } catch(e){}
 if (!REGIONS[mapRegion] || REGIONS[mapRegion].disabled) mapRegion = "main";
@@ -242,7 +242,7 @@ function buildMapUI(){
     const k = b.dataset.cat;
     mapActive[k] = !mapActive[k];
     b.classList.toggle("on", mapActive[k]);
-    try { localStorage.setItem("pw_map_cats2", JSON.stringify(mapActive)); } catch(e){}
+    try { localStorage.setItem("pw_map_cats3", JSON.stringify(mapActive)); } catch(e){}
     applyLayerVisibility();
   }));
   document.getElementById("mapAll").addEventListener("click", () => setAllCats(true));
@@ -258,7 +258,7 @@ function buildMapUI(){
 function setAllCats(v){
   Object.keys(MAP_CATS).forEach(k => mapActive[k] = v);
   document.querySelectorAll(".legend [data-cat]").forEach(b => b.classList.toggle("on", v));
-  try { localStorage.setItem("pw_map_cats2", JSON.stringify(mapActive)); } catch(e){}
+  try { localStorage.setItem("pw_map_cats3", JSON.stringify(mapActive)); } catch(e){}
   applyLayerVisibility();
 }
 function switchRegion(){

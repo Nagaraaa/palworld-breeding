@@ -421,11 +421,11 @@ footer{padding:24px 20px 32px;}
   box-shadow:0 2px 6px rgba(0,0,0,.6);}
 .pmk.emo{display:flex; align-items:center; justify-content:center; font-size:15px; line-height:1;}
 .pmkwrap:hover .pmk{transform:scale(1.45); z-index:400;}
-#mapCanvas.z-s .pmk{width:15px; height:15px;}
-#mapCanvas.z-s .pmk.emo{font-size:11px;}
-#mapCanvas.z-m .pmk{width:21px; height:21px;}
-#mapCanvas.z-l .pmk{width:28px; height:28px;}
-#mapCanvas.z-l .pmk.emo{font-size:17px;}
+
+
+
+
+
 .leaflet-marker-icon{will-change:transform;}
 .leaflet-popup-content b{font-size:13.5px;}
 .leaflet-popup-content .poplv{color:var(--accent); font-size:11.5px; font-weight:700;}
@@ -511,3 +511,29 @@ header{padding:34px 16px 14px; text-align:center;}
   .hero{padding:34px 16px 30px;} .hero-stats{gap:18px;} .hstat b{font-size:21px;}
   .logo-mark{width:36px; height:36px;}
 }
+
+/* ==================== ICÔNES MAISON ==================== */
+.ic{flex-shrink:0; display:block;}
+.tab{display:inline-flex; align-items:center; gap:7px;}
+.tab .ic{opacity:.85;}
+.tab.active .ic{opacity:1;}
+.tlbl{line-height:1;}
+.card h2{display:flex; align-items:center; gap:9px;}
+.card h2 .ic{color:var(--accent); opacity:.9;}
+.btn-primary,.btn-ghost{display:inline-flex; align-items:center; gap:9px;}
+.feat-ico{display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:12px;
+  background:color-mix(in srgb, var(--fc) 14%, transparent); border:1px solid color-mix(in srgb, var(--fc) 30%, transparent);
+  color:var(--fc); margin-bottom:4px; transition:transform .2s, background .2s;}
+.feat:hover .feat-ico{transform:scale(1.08) rotate(-4deg); background:color-mix(in srgb, var(--fc) 22%, transparent);}
+.hero-guild b{display:flex; align-items:center; gap:8px;}
+.hero-guild b .ic{color:var(--accent2);}
+.legend-title{display:flex; align-items:center; gap:7px;}
+
+/* marqueurs plus lisibles */
+#mapCanvas.z-s .pmk{width:22px; height:22px;}
+#mapCanvas.z-s .pmk.emo{font-size:15px;}
+#mapCanvas.z-m .pmk{width:28px; height:28px;}
+#mapCanvas.z-m .pmk.emo{font-size:18px;}
+#mapCanvas.z-l .pmk{width:36px; height:36px;}
+#mapCanvas.z-l .pmk.emo{font-size:22px;}
+.pmk{filter:drop-shadow(0 2px 4px rgba(0,0,0,.95)) drop-shadow(0 0 2px rgba(0,0,0,.9));}
