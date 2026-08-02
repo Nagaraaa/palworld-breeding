@@ -7,13 +7,13 @@
 /* ---- régions : conversion coordonnées sauvegarde -> coordonnées in-game -> pixels carte ---- */
 const REGIONS = {
   main: {
-    label: "🏝️ Îles Palpagos", tiles: "https://cdn.paldb.cc/image/map8/z{z}x{x}y{y}.webp",
+    label: "🏝️ Îles Palpagos", tiles: "https://cdn.paldb.cc/image/map8/z{z}x{x}y{y}.webp", img: "map.jpg",
     toGame: (x, y) => ({ x: Math.round((y - 158000) / 459), y: Math.round((x + 123888) / 459) }),
     toPix:  (gx, gy) => [0.16221 * gy - 167.25513, 0.16221 * gx + 311.8397],
     test:   (x, y) => !(x > 400000 && y < -450000)
   },
   tree: {
-    label: "🌳 Arbre-Monde", tiles: "https://cdn.paldb.cc/image/treemap8/z{z}x{x}y{y}.webp",
+    label: "🌳 Arbre-Monde", tiles: "https://cdn.paldb.cc/image/treemap8/z{z}x{x}y{y}.webp", img: "map-tree.jpg",
     toGame: (x, y) => ({ x: Math.round(y * 0.00074909 + 485.2784), y: Math.round(x * 0.00074853 + 388.8339) }),
     toPix:  (gx, gy) => [2.00281 * gy - 1811.57135, 1.99916 * gx + 255.58671],
     test:   (x, y) => x > 400000 && y < -450000
@@ -191,23 +191,40 @@ function setAllCats(v){
   try { localStorage.setItem("pw_map_cats", JSON.stringify(mapActive)); } catch(e){}
   drawMarkers();
 }
-function switchRegion(){
-  if (tileLayer){ mapObj.removeLayer(tileLayer); tileLayer = null; }
-  let failed = 0;
+function setBgNote(txt){
+  const el = document.getElementById("mapSource");
+  if (el) el.innerHTML = txt;
+}
+function useGenerated(){
+  const pts = mapPOI.filter(p => p.reg === mapRegion).map(p => {
+    const [lat, lng] = REGIONS[mapRegion].toPix(p.mx, p.my); return { lat, lng }; });
+  if (!pts.length) return;
+  const bg = buildBackdrop(pts);
+  if (tileLayer) mapObj.removeLayer(tileLayer);
+  tileLayer = L.imageOverlay(bg.url, bg.bounds, { opacity: .95, className: "mapbg" }).addTo(mapObj);
+  setBgNote(`Fond <b>généré</b> à partir des points d'intérêt — dépose <code>${REGIONS[mapRegion].img}</code> à la racine du site pour un vrai visuel`);
+}
+function useTiles(){
+  let failed = 0, ok = 0;
   tileLayer = L.tileLayer(REGIONS[mapRegion].tiles, { minZoom: 1, minNativeZoom: 1, maxZoom: 6, maxNativeZoom: 6,
     tileSize: 512, noWrap: true, bounds: TILE_BOUNDS, className: "mapbg", keepBuffer: 3 });
-  tileLayer.on("tileerror", () => {
-    if (++failed !== 4) return;                       /* fond de secours généré */
-    mapObj.removeLayer(tileLayer); tileLayer = null;
-    const pts = mapPOI.filter(p => p.reg === mapRegion).map(p => {
-      const [lat, lng] = REGIONS[mapRegion].toPix(p.mx, p.my); return { lat, lng }; });
-    if (!pts.length) return;
-    const bg = buildBackdrop(pts);
-    tileLayer = L.imageOverlay(bg.url, bg.bounds, { opacity: .95, className: "mapbg" }).addTo(mapObj);
-  });
+  tileLayer.on("tileload", () => ok++);
+  tileLayer.on("tileerror", () => { if (++failed >= 2 && failed > ok) useGenerated(); });
   tileLayer.addTo(mapObj);
+  setBgNote(`Fond : tuiles <a href="https://paldb.cc" target="_blank">paldb.cc</a>`);
+}
+function switchRegion(){
+  if (tileLayer){ mapObj.removeLayer(tileLayer); tileLayer = null; }
   mapObj.setMaxBounds([[-560, -50], [50, 560]]);
   mapObj.setView([-256, 256], 1);
+  /* 1) image déposée localement, 2) tuiles du jeu, 3) fond généré */
+  const local = new Image();
+  local.onload = () => {
+    tileLayer = L.imageOverlay(local.src, TILE_BOUNDS, { opacity: .96, className: "mapbg" }).addTo(mapObj);
+    setBgNote("Fond : image locale");
+  };
+  local.onerror = () => useTiles();
+  local.src = REGIONS[mapRegion].img;
   drawMarkers();
 }
 function drawMarkers(){
