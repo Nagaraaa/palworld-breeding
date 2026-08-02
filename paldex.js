@@ -42,6 +42,8 @@ function id2code(id){
 function pspOf(id){ return PSP_PALS ? PSP_PALS[id2code(id).toLowerCase()] : null; }
 
 /* ==================== ONGLET PALDEX ==================== */
+/* pals absents du jeu vanilla (non obtenables en partie normale) */
+const HORS_VANILLA = new Set(["204.0"]);   /* Astralym */
 let paldexInit = false, dexFilters = { q: "", elem: "", work: "", min: 1, sort: "dex" };
 function initPaldexTab(){
   if (paldexInit) return;
@@ -119,6 +121,7 @@ function renderDex(){
   const grid = document.getElementById("dexGrid");
   const ids = SORTED_IDS.filter(id => {
     if (PALS[id].monster) return false;
+    if (HORS_VANILLA.has(id)) return false;
     const p = pspOf(id);
     if (dexFilters.q && fuzzyScore(dexFilters.q, PALS[id].name) < 0 && !palNo(id).toLowerCase().includes(dexFilters.q)) return false;
     if (dexFilters.elem && !(p && (p.element_types || []).includes(dexFilters.elem))) return false;

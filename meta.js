@@ -124,7 +124,7 @@ function bestPalsFor(id){
   if (!PSP_PALS) return "";
   const cfg = META_PALS[id] || { type: "none" };
   if (cfg.type === "none") return "";
-  let ids = SORTED_IDS.filter(i => !PALS[i].monster && pspOf(i));
+  let ids = SORTED_IDS.filter(i => !PALS[i].monster && !HORS_VANILLA.has(i) && pspOf(i));
   if (cfg.type === "nocturne"){
     ids = ids.filter(i => pspOf(i).nocturnal)
       .sort((a, b) => Math.max(...Object.values(pspOf(b).work_suitability || {0:0})) - Math.max(...Object.values(pspOf(a).work_suitability || {0:0})));

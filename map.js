@@ -22,14 +22,23 @@ const REGIONS = {
 const TILE_BOUNDS = [[-512, 0], [0, 512]];
 function savToMap(x, y){ return REGIONS.main.toGame(x, y); }   /* compat */
 
+const ICO = p => "/api/tile?i=" + encodeURIComponent(p);
 const MAP_CATS = {
-  ft:      { label: "Voyage rapide", icon: "🚩", color: "#5eead4" },
-  tower:   { label: "Tours de guet", icon: "🗼", color: "#38bdf8" },
-  effigy:  { label: "Statues de Pal Ancien", icon: "🗿", color: "#f3ca63" },
-  dungeon: { label: "Donjons", icon: "🕳️", color: "#a78bfa" },
-  alpha:   { label: "Pals Alpha", icon: "👑", color: "#fb923c" },
-  predator:{ label: "Prédateurs", icon: "💀", color: "#f87171" },
-  relic:   { label: "Reliques / bonus", icon: "🔮", color: "#4ade80" }
+  ft:        { label: "Voyage rapide", icon: "🚩", color: "#5eead4",
+               img: ICO("Pal/Texture/UI/InGame/T_icon_compass_FTtower.webp") },
+  tower:     { label: "Tours de guet", icon: "🗼", color: "#38bdf8",
+               img: ICO("Pal/Texture/UI/InGame/T_icon_compass_FTUnlockMap.webp") },
+  towerboss: { label: "Boss de tour", icon: "🏛️", color: "#f472b6",
+               img: ICO("Pal/Texture/UI/InGame/T_icon_compass_tower.webp") },
+  effigy:    { label: "Statues de Pal Ancien", icon: "🗿", color: "#f3ca63",
+               img: ICO("Others/InventoryItemIcon/Texture/T_itemicon_Material_BeastBone_Ancient.webp") },
+  dungeon:   { label: "Donjons", icon: "🕳️", color: "#a78bfa", img: ICO("ui/exit-door.svg") },
+  alpha:     { label: "Pals Alpha", icon: "👑", color: "#fb923c", pal: true },
+  predator:  { label: "Prédateurs", icon: "💀", color: "#f87171", pal: true },
+  humanboss: { label: "Boss humains", icon: "🎯", color: "#94a3b8",
+               img: ICO("Pal/Texture/UI/InGame/T_icon_compass_00.webp") },
+  relic:     { label: "Reliques / bonus", icon: "🔮", color: "#4ade80",
+               img: ICO("Others/InventoryItemIcon/Texture/T_itemicon_PalSphere_Legend.webp") }
 };
 const RELIC_FR = { jump_power: "Puissance de saut", status_ailment_resist: "Résistance aux altérations",
   capture_power: "Puissance de capture", stamina_reduction: "Endurance", hunger_reduction: "Faim",
@@ -74,36 +83,62 @@ async function loadPOI(){
     fetch(B + "bosses.json").then(r => r.json()).catch(() => [])
   ]);
   const arr = o => Array.isArray(o) ? o : Object.values(o);
-  /* nom + niveau des alphas, indexés par position arrondie */
-  bossNames = {};
-  arr(bosses).forEach(b => {
-    const code = String(b.character_id || "").replace(/^BOSS_|^PREDATOR_/i, "");
-    const id = typeof CODE2ID !== "undefined" ? CODE2ID[code.toLowerCase()] : null;
-    bossNames[Math.round(b.x / 100) + "|" + Math.round(b.y / 100)] =
-      (id && typeof PALS !== "undefined" && PALS[id] ? PALS[id].name : code) + (b.level ? " · Nv." + b.level : "");
-  });
   const pts = [];
-  const push = (c, x, y, n) => {
+  const push = (c, x, y, n, extra) => {
     const reg = REGIONS.tree.test(x, y) ? "tree" : "main";
     const g = REGIONS[reg].toGame(x, y);
-    pts.push({ c, x, y, n, reg, mx: g.x, my: g.y });
+    pts.push(Object.assign({ c, x, y, n, reg, mx: g.x, my: g.y }, extra || {}));
   };
-  arr(ft).forEach(p => push(/UnlockMapPoint/.test(p.class || "") ? "tower" : "ft", p.x, p.y, prettyFT(p.id)));
-  arr(eff).forEach(p => push("effigy", p.x, p.y, "Statue de Pal Ancien"));
-  arr(mo).forEach(p => {
-    const c = p.type === "dungeon" ? "dungeon" : p.type === "alpha_pal" ? "alpha" : "predator";
-    const nm = bossNames[Math.round(p.x / 100) + "|" + Math.round(p.y / 100)];
-    push(c, p.x, p.y, nm ? (c === "alpha" ? "Alpha " : c === "predator" ? "Prédateur " : "") + nm : MAP_CATS[c].label);
+  /* voyage rapide, tours de guet, arènes de boss de tour */
+  arr(ft).forEach(p => {
+    const id = p.id || "";
+    if (/UnlockMapPoint/.test(p.class || "")) return push("tower", p.x, p.y, "Tour de guet — dévoile la carte");
+    if (/^Boss_|BOSS|LastBoss|_lab$/i.test(id)) return push("towerboss", p.x, p.y, prettyFT(id));
+    push("ft", p.x, p.y, prettyFT(id));
   });
+  arr(eff).forEach(p => push("effigy", p.x, p.y, "Statue de Pal Ancien"));
   arr(rel).forEach(p => push("relic", p.x, p.y, "Relique — " + (RELIC_FR[p.relic_type] || p.relic_type)));
+  /* donjons */
+  arr(mo).filter(p => p.type === "dungeon").forEach(p => push("dungeon", p.x, p.y, "Donjon"));
+  /* prédateurs : positions de map_objects, nommés via bosses.json */
+  const bs = arr(bosses);
+  const bkey = o => Math.round(o.x / 100) + "|" + Math.round(o.y / 100);
+  const byPos = {};
+  bs.forEach(b => { byPos[bkey(b)] = b; });
+  const palOf = code => {
+    const clean = String(code || "").replace(/^BOSS_|^PREDATOR_|^GYM_/i, "");
+    const id = typeof CODE2ID !== "undefined" ? CODE2ID[clean.toLowerCase()] : null;
+    return id && typeof PALS !== "undefined" && PALS[id] ? { id, name: PALS[id].name } : null;
+  };
+  arr(mo).filter(p => p.type === "predator_pal").forEach(p => {
+    const b = byPos[bkey(p)];
+    const pal = b ? palOf(b.character_id) : null;
+    push("predator", p.x, p.y, pal ? "Prédateur " + pal.name : "Prédateur",
+      { pid: pal ? pal.id : null, lv: b ? b.level : null });
+  });
+  /* alphas et boss humains : directement depuis bosses.json (plus complet) */
+  const predKeys = new Set(arr(mo).filter(p => p.type === "predator_pal").map(bkey));
+  bs.forEach(b => {
+    if (predKeys.has(bkey(b))) return;
+    const pal = palOf(b.character_id);
+    if (pal) push("alpha", b.x, b.y, "Alpha " + pal.name, { pid: pal.id, lv: b.level });
+    else {
+      const nom = String(b.spawner_id || "").replace(/^BOSS_/i, "").replace(/_/g, " ");
+      push("humanboss", b.x, b.y, "Boss — " + (nom || "humain"), { lv: b.level });
+    }
+  });
+  pts.forEach(p => { const g = REGIONS[p.reg].toGame(p.x, p.y); p.mx = g.x; p.my = g.y; });
   return pts;
 }
 function prettyFT(id){
   if (!id) return "Point de voyage rapide";
   if (/^WatchTower/.test(id)) return "Tour de guet";
-  if (/^SkyIsland/.test(id)) return "Île céleste";
-  if (/^WorldTree/.test(id)) return "Arbre-Monde";
-  if (/^Boss_/.test(id)) return "Zone de boss — " + id.replace("Boss_", "");
+  if (/SkyIsland_BOSS/i.test(id)) return "Tour — Île céleste";
+  if (/WorldTree_LastBoss/i.test(id)) return "Tour finale — Arbre-Monde";
+  if (/WorldTree_lab/i.test(id)) return "Laboratoire — Arbre-Monde";
+  if (/^SkyIsland/.test(id)) return "Point de voyage rapide (île céleste)";
+  if (/^WorldTree/.test(id)) return "Point de voyage rapide (Arbre-Monde)";
+  if (/^Boss_/.test(id)) return "Tour — " + id.replace("Boss_", "");
   return "Point de voyage rapide";
 }
 
@@ -262,13 +297,18 @@ function drawMarkers(){
     const layer = useCluster
       ? L.markerClusterGroup({ maxClusterRadius: z => z >= 4 ? 18 : 42, showCoverageOnHover: false,
           chunkedLoading: true, iconCreateFunction: cl => L.divIcon({ className: "poicluster",
-            html: `<span style="--c:${c.color}">${cl.getChildCount()}</span>`, iconSize: [30, 30] }) })
+            html: `<span style="--c:${c.color}">${cl.getChildCount()}</span>`, iconSize: [32, 32] }) })
       : L.layerGroup();
     for (const p of pts){
       const [lat, lng] = R.toPix(p.mx, p.my);
+      let inner;
+      if (c.pal && p.pid) inner = `<img src="https://palworld.kimpton.io/icons/pals/${p.pid}.png" alt="">`;
+      else if (c.img) inner = `<img src="${c.img}" alt="" onerror="this.replaceWith(document.createTextNode('${c.icon}'))">`;
+      else inner = c.icon;
       const mk = L.marker([lat, lng], { icon: L.divIcon({ className: "poimk",
-        html: `<span style="--c:${c.color}">${c.icon}</span>`, iconSize: [22, 22] }) });
-      mk.bindPopup(`<b>${c.icon} ${p.n}</b><br><span class="popc">Coordonnées in-game : <b>${p.mx}, ${p.my}</b></span>`);
+        html: `<span style="--c:${c.color}">${inner}</span>`, iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -12] }) });
+      mk.bindPopup(`<b>${p.n}</b>${p.lv ? ` <span class="poplv">Nv.${p.lv}</span>` : ""}
+        <br><span class="popc">${c.label} · coordonnées in-game <b>${p.mx}, ${p.my}</b></span>`);
       layer.addLayer(mk);
     }
     layer.addTo(mapObj);
