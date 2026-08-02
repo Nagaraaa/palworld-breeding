@@ -1,5 +1,7 @@
 # 🧪 Pal-Lab — le compagnon Palworld de ta guilde
 
+Créé par **Nagara**.
+
 Site statique, aucun build : https://palworld-breeding-mocha.vercel.app
 
 ## Fonctions
