@@ -1,0 +1,465 @@
+"use strict";
+/* ==================== SÉLECTEUR DE PAL ==================== */
+const SORTED_IDS = [...ALL_IDS].sort((x, y) => {
+  const mx = x[0] === "M", my = y[0] === "M";
+  if (mx !== my) return mx ? 1 : -1;
+  return parseFloat(x) - parseFloat(y) || x.localeCompare(y);
+});
+function makePicker(containerId, labelText, onChange, opts = {}){
+  const el = document.getElementById(containerId);
+  const ids = opts.ids || SORTED_IDS;
+  let value = null;
+  el.innerHTML = `
+    <label>${labelText}</label>
+    <button class="pickbtn" type="button"><span class="ph">${opts.placeholder || "Choisir un pal…"}</span></button>
+    <button class="clearbtn" type="button" title="Effacer">✕</button>
+    <div class="dropdown">
+      <input type="text" placeholder="Rechercher… (recherche floue)">
+      <div class="optlist"></div>
+    </div>`;
+  const btn = el.querySelector(".pickbtn"), dd = el.querySelector(".dropdown"),
+        inp = dd.querySelector("input"), list = dd.querySelector(".optlist"),
+        clearBtn = el.querySelector(".clearbtn");
+  let selIndex = -1, shown = [];
+  function render(filter){
+    const f = norm(filter || "");
+    if (!f){ shown = ids.slice(); }
+    else {
+      shown = ids.map(id => ({ id, s: Math.max(fuzzyScore(f, PALS[id].name), palNo(id).toLowerCase().includes(f) ? 1500 : -1) }))
+        .filter(o => o.s >= 0).sort((a, b) => b.s - a.s).map(o => o.id);
+    }
+    selIndex = shown.length ? 0 : -1;
+    list.innerHTML = shown.slice(0, 400).map((id, i) =>
+      `<div class="opt${i===0?' sel':''}" data-id="${id}">${icon(id)}<span>${PALS[id].name}</span><span class="pw">⚡${PALS[id].p}</span><span class="no">${palNo(id)}</span></div>`
+    ).join("") || `<div class="opt" style="color:var(--muted)">Aucun résultat</div>`;
+  }
+  function open(){ dd.classList.add("open"); inp.value = ""; render(""); setTimeout(() => inp.focus(), 10); }
+  function close(){ dd.classList.remove("open"); }
+  function select(id, silent){
+    value = id; close();
+    btn.innerHTML = `${icon(id, '', 34)}<span>${PALS[id].name}</span><span class="no">${palNo(id)}</span>`;
+    el.classList.add("filled");
+    if (!silent) onChange(id);
+  }
+  btn.addEventListener("click", () => dd.classList.contains("open") ? close() : open());
+  clearBtn.addEventListener("click", () => {
+    value = null; el.classList.remove("filled");
+    btn.innerHTML = `<span class="ph">${opts.placeholder || "Choisir un pal…"}</span>`;
+    onChange(null);
+  });
+  inp.addEventListener("input", () => render(inp.value));
+  inp.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown"){ selIndex = Math.min(selIndex + 1, shown.length - 1); }
+    else if (e.key === "ArrowUp"){ selIndex = Math.max(selIndex - 1, 0); }
+    else if (e.key === "Enter"){ if (shown[selIndex]) select(shown[selIndex]); return; }
+    else if (e.key === "Escape"){ close(); return; }
+    else return;
+    e.preventDefault();
+    list.querySelectorAll(".opt").forEach((o, i) => o.classList.toggle("sel", i === selIndex));
+    const s = list.querySelector(".opt.sel"); if (s) s.scrollIntoView({ block: "nearest" });
+  });
+  list.addEventListener("click", e => {
+    const o = e.target.closest(".opt"); if (o && o.dataset.id) select(o.dataset.id);
+  });
+  document.addEventListener("click", e => { if (!el.contains(e.target)) close(); });
+  return { get: () => value, set: (id, silent) => { if (id && PALS[id]) select(id, silent); } };
+}
+
+/* ==================== ONGLETS (View Transitions) ==================== */
+const TABS = ["breed", "parents", "path", "mine", "combos"];
+function switchTab(name){
+  const doIt = () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
+    document.querySelectorAll("section").forEach(x => x.classList.remove("visible"));
+    document.getElementById("tab-" + name).classList.add("visible");
+    if (name === "mine") initMineTab();
+    if (name === "combos") initComboTab();
+    updateHash();
+  };
+  if (document.startViewTransition && !reduceMotion && !restoring) document.startViewTransition(doIt);
+  else doIt();
+}
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
+addEventListener("keydown", e => {
+  if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
+  const n = parseInt(e.key);
+  if (n >= 1 && n <= 5) switchTab(TABS[n - 1]);
+});
+
+/* ==================== PERMALIENS ==================== */
+let restoring = false;
+function updateHash(){
+  if (restoring) return;
+  const active = document.querySelector(".tab.active").dataset.tab;
+  const segs = [active];
+  if (active === "breed"){ segs.push(pkA.get() || "", pkB.get() || ""); }
+  else if (active === "parents"){ segs.push(pkChild.get() || "", pkWith.get() || ""); }
+  else if (active === "path"){ segs.push(pkFrom.get() || "", pkTo.get() || ""); }
+  history.replaceState(null, "", "#" + segs.join("/").replace(/\/+$/, ""));
+}
+function restoreHash(){
+  const h = location.hash.slice(1);
+  if (!h) return;
+  const [tab, x, y] = h.split("/");
+  if (!TABS.includes(tab)) return;
+  restoring = true;
+  switchTab(tab);
+  if (tab === "breed"){ if (x) pkA.set(x, true); if (y) pkB.set(y, true); updateBreed(); }
+  else if (tab === "parents"){ if (y) pkWith.set(y, true); if (x) pkChild.set(x, true); if (x) updateParents(); }
+  else if (tab === "path"){ if (x) pkFrom.set(x, true); if (y) pkTo.set(y, true); updatePath(); }
+  restoring = false;
+  updateHash();
+}
+
+/* ==================== MES PALS : état persistant ==================== */
+let owned = new Set();
+try { owned = new Set((JSON.parse(localStorage.getItem("pw_owned") || "[]")).filter(id => PALS[id])); } catch(e){}
+function saveOwned(){
+  localStorage.setItem("pw_owned", JSON.stringify([...owned]));
+  document.getElementById("ownedCnt").textContent = owned.size;
+}
+document.getElementById("ownedCnt").textContent = owned.size;
+
+/* ==================== 1. CROISER ==================== */
+const breedOut = document.getElementById("breedResult");
+function childCard(r, reuse){
+  const p = PALS[r.child];
+  const tags = [];
+  if (r.special && !r.note) tags.push(`<span class="tag gold">✨ Combo spécial</span>`);
+  if (r.note) tags.push(`<span class="tag gold">✨ ${r.note}</span>`);
+  if (r.self) tags.push(`<span class="tag">Même espèce : l'enfant est toujours un ${p.name}</span>`);
+  if (owned.has(r.child)) tags.push(`<span class="tag" style="color:var(--ok)">déjà dans tes pals</span>`);
+  return `<div class="child-card">
+    ${icon(r.child, "big", 64)}
+    <div>
+      <div class="cname">${p.name} <span style="color:var(--muted);font-size:13px">${palNo(r.child)}</span></div>
+      <div class="pw">Puissance d'élevage : ${p.p}</div>
+      ${tags.length ? `<div>${tags.join("")}</div>` : ""}
+    </div>
+    ${reuse ? `<div class="usebtns">
+      <button class="use-btn" data-use-a="${r.child}">↖ Réutiliser en parent A</button>
+      <button class="use-btn" data-use-b="${r.child}">↗ Réutiliser en parent B</button>
+    </div>` : ""}
+  </div>`;
+}
+let hatchTimer = null;
+function updateBreed(){
+  const a = pkA.get(), b = pkB.get();
+  clearTimeout(hatchTimer);
+  if (!a || !b){ breedOut.innerHTML = ""; updateHash(); return; }
+  updateHash();
+  const res = breedAll(a, b);
+  const showResult = () => {
+    breedOut.innerHTML = `<div style="color:var(--muted);font-size:13px;margin-top:6px">Enfant :</div>` +
+      res.map(r => childCard(r, true)).join("");
+    breedOut.querySelectorAll("[data-use-a]").forEach(x => x.addEventListener("click", () => pkA.set(x.dataset.useA)));
+    breedOut.querySelectorAll("[data-use-b]").forEach(x => x.addEventListener("click", () => pkB.set(x.dataset.useB)));
+    if (res.some(r => r.special)){
+      const rect = breedOut.getBoundingClientRect();
+      confetti(rect.left + rect.width / 2, rect.top + 60);
+    }
+  };
+  if (reduceMotion){ showResult(); return; }
+  breedOut.innerHTML = `<div class="hatch"><span class="egg">🥚</span></div>`;
+  hatchTimer = setTimeout(showResult, 650);
+}
+const pkA = makePicker("pkA", "Parent A", updateBreed, { ids: PARENTS });
+const pkB = makePicker("pkB", "Parent B", updateBreed, { ids: PARENTS });
+document.getElementById("swapAB").addEventListener("click", function(){
+  this.classList.toggle("spin");
+  const a = pkA.get(), b = pkB.get();
+  if (a && b){ pkA.set(b, true); pkB.set(a, true); updateBreed(); }
+});
+
+/* ==================== 2. TROUVER LES PARENTS (index instantané + virtualisation) ==================== */
+const parentsOut = document.getElementById("parentsResult");
+let onlyOwned = false;
+document.getElementById("ownedFilter").addEventListener("click", function(){
+  onlyOwned = !onlyOwned; this.classList.toggle("on", onlyOwned); updateParents();
+});
+let renderBatchState = null;
+function updateParents(){
+  const t = pkChild.get();
+  updateHash();
+  if (!t){ parentsOut.innerHTML = ""; return; }
+  parentsOut.innerHTML = `<div class="skl"></div><div class="skl"></div>`;
+  whenIndexReady().then(idx => {
+    if (pkChild.get() !== t) return;
+    let pairs = (idx[t] || []).slice();
+    const w = pkWith.get();
+    if (w) pairs = pairs.filter(p => p[0] === w || p[1] === w);
+    if (onlyOwned) pairs = pairs.filter(p => owned.has(p[0]) && owned.has(p[1]));
+    const selfPair = pairs.find(p => p[0] === t && p[1] === t);
+    const specials = pairs.filter(p => p[2] && !(p[0] === t && p[1] === t));
+    const normals = pairs.filter(p => !p[2] && !(p[0] === t && p[1] === t));
+    let html = "";
+    if (!pairs.length){
+      html = `<div class="warnbox">Aucune combinaison ${w ? "avec ce parent " : ""}${onlyOwned ? "avec tes pals " : ""}ne permet d'obtenir <b>${PALS[t].name}</b>${w || onlyOwned ? "" : " par croisement. Il faut le capturer ou trouver son œuf"}.</div>`;
+      parentsOut.innerHTML = html; return;
+    }
+    html += `<div class="count-info"><b><span id="pairCount">0</span></b> combinaison(s) pour obtenir <b style="color:var(--accent)">${PALS[t].name}</b>${w ? ` avec <b>${PALS[w].name}</b>` : ""}${onlyOwned ? ` <span style="color:var(--ok)">parmi tes pals</span>` : ""} :</div>`;
+    if (selfPair) html += `<div class="infobox">💡 2 × <b>${PALS[t].name}</b> donnent toujours un <b>${PALS[t].name}</b>.</div>`;
+    html += `<div class="pairgrid" id="pairGrid"></div><div id="pairSentinel"></div>`;
+    parentsOut.innerHTML = html;
+    countUp(document.getElementById("pairCount"), pairs.length);
+    const ordered = [...specials, ...normals];
+    renderBatchState = { list: ordered, pos: 0, grid: document.getElementById("pairGrid") };
+    renderNextBatch();
+    const sentinel = document.getElementById("pairSentinel");
+    new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) renderNextBatch();
+    }, { rootMargin: "600px" }).observe(sentinel);
+  });
+}
+function renderNextBatch(){
+  const st = renderBatchState;
+  if (!st || st.pos >= st.list.length) return;
+  const batch = st.list.slice(st.pos, st.pos + 160);
+  const frag = document.createElement("template");
+  frag.innerHTML = batch.map((p, i) => pairChip(p, i)).join("");
+  st.grid.appendChild(frag.content);
+  st.pos += batch.length;
+}
+function pairChip(p, i){
+  const [a, b, spec, note] = p;
+  const both = owned.has(a) && owned.has(b);
+  const delay = reduceMotion ? "" : `style="animation-delay:${Math.min(i * 18, 400)}ms"`;
+  return `<div class="pairchip${spec ? " special" : ""}${both ? " owned2" : ""}" ${delay}>
+    ${icon(a)}<span class="nm">${PALS[a].name}</span>
+    <span class="x">✕</span>
+    ${icon(b)}<span class="nm">${PALS[b].name}</span>
+    ${note ? `<span class="badge">${note}</span>` : (spec ? `<span class="badge">✨ spécial</span>` : (both ? `<span class="badge green">✓ possédés</span>` : ""))}
+  </div>`;
+}
+const pkChild = makePicker("pkChild", "Enfant désiré", updateParents);
+const pkWith = makePicker("pkWith", "Avec ce parent (optionnel)", () => updateParents(), { ids: PARENTS, placeholder: "Tous les parents" });
+
+/* ==================== 3. CHEMIN LE PLUS COURT ==================== */
+const pathOut = document.getElementById("pathResult");
+const adjCache = {};
+function adjacency(c){
+  if (adjCache[c]) return adjCache[c];
+  const m = new Map();
+  for (const q of PARENTS){
+    for (const r of breedAll(c, q)){
+      if (!m.has(r.child)) m.set(r.child, []);
+      m.get(r.child).push(q);
+    }
+  }
+  adjCache[c] = m;
+  return m;
+}
+function shortestPath(from, to){
+  if (from === to) return [];
+  const prev = { [from]: null };
+  let frontier = [from];
+  while (frontier.length){
+    const next = [];
+    for (const c of frontier){
+      for (const [child, partners] of adjacency(c)){
+        if (!(child in prev)){
+          prev[child] = { parent: c, partners };
+          if (child === to){
+            const steps = [];
+            let cur = to;
+            while (prev[cur]){ steps.unshift({ from: prev[cur].parent, partners: prev[cur].partners, child: cur }); cur = prev[cur].parent; }
+            return steps;
+          }
+          next.push(child);
+        }
+      }
+    }
+    frontier = next;
+  }
+  return null;
+}
+function updatePath(){
+  const f = pkFrom.get(), t = pkTo.get();
+  updateHash();
+  if (!f || !t){ pathOut.innerHTML = ""; return; }
+  pathOut.innerHTML = `<div class="skl"></div>`;
+  setTimeout(() => {
+    if (pkFrom.get() !== f || pkTo.get() !== t) return;
+    if (f === t){ pathOut.innerHTML = `<div class="infobox">C'est déjà le même pal 😄</div>`; return; }
+    const steps = shortestPath(f, t);
+    if (!steps){
+      pathOut.innerHTML = `<div class="warnbox"><b>${PALS[t].name}</b> ne peut pas être obtenu par croisement depuis <b>${PALS[f].name}</b>. Ce pal ne s'obtient qu'en le capturant, via son œuf, ou en croisant 2 parents de la même espèce.</div>`;
+      return;
+    }
+    let html = `<div class="count-info"><b>${steps.length}</b> croisement${steps.length > 1 ? "s" : ""} nécessaire${steps.length > 1 ? "s" : ""} :</div><div class="path">`;
+    steps.forEach((s, i) => {
+      const sorted = [...s.partners].sort((a, b) => (owned.has(b) ? 1 : 0) - (owned.has(a) ? 1 : 0));
+      const partner = sorted[0];
+      const others = sorted.length - 1;
+      const delay = reduceMotion ? "" : `style="animation-delay:${i * 90}ms"`;
+      html += `<div class="step" ${delay}>
+        <div class="rail"><div class="dot">${i + 1}</div>${i < steps.length - 1 ? '<div class="line"></div>' : ""}</div>
+        <div class="body">
+          <div class="steprow">
+            ${icon(s.from, '', 36)}<b>${PALS[s.from].name}</b>
+            <span class="op">✕</span>
+            ${icon(partner, '', 36)}<b>${PALS[partner].name}</b>${owned.has(partner) ? '<span class="own">✓ possédé</span>' : ""}
+            <span class="arrow">➜</span>
+            ${icon(s.child, '', 36)}<b style="color:var(--accent)">${PALS[s.child].name}</b>
+          </div>
+          ${others > 0 ? `<div class="altinfo" data-i="${i}">▸ ${others} autre${others > 1 ? "s" : ""} partenaire${others > 1 ? "s" : ""} possible${others > 1 ? "s" : ""}</div>
+          <div class="altlist" id="alt${i}">${sorted.slice(1, 60).map(q => `<span class="altchip">${icon(q, '', 22)}${PALS[q].name}${owned.has(q) ? " ✓" : ""}</span>`).join("")}${sorted.length > 61 ? `<span class="altchip">+${sorted.length - 61}…</span>` : ""}</div>` : ""}
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+    pathOut.innerHTML = html;
+    pathOut.querySelectorAll(".altinfo").forEach(el => el.addEventListener("click", () => {
+      const l = document.getElementById("alt" + el.dataset.i);
+      l.classList.toggle("open");
+      el.textContent = (l.classList.contains("open") ? "▾ " : "▸ ") + el.textContent.slice(2);
+    }));
+  }, 30);
+}
+const pkFrom = makePicker("pkFrom", "Pal de départ", updatePath, { ids: PARENTS });
+const pkTo = makePicker("pkTo", "Pal recherché", updatePath);
+document.getElementById("swapFT").addEventListener("click", function(){
+  this.classList.toggle("spin");
+  const a = pkFrom.get(), b = pkTo.get();
+  if (a && b){ pkFrom.set(b, true); pkTo.set(a, true); updatePath(); }
+});
+
+/* ==================== 4. MES PALS ==================== */
+let mineInit = false, mineDebounce = null;
+function initMineTab(){
+  if (mineInit){ return; }
+  mineInit = true;
+  const grid = document.getElementById("mineGrid");
+  grid.innerHTML = SORTED_IDS.filter(id => !PALS[id].nobreed).map(id =>
+    `<div class="palcell${owned.has(id) ? " owned" : ""}" data-id="${id}" title="${PALS[id].name} ${palNo(id)}">
+      ${icon(id, '', 40)}<span class="nm">${PALS[id].name}</span>
+    </div>`).join("");
+  grid.addEventListener("click", e => {
+    const cell = e.target.closest(".palcell"); if (!cell) return;
+    const id = cell.dataset.id;
+    if (owned.has(id)) owned.delete(id); else owned.add(id);
+    cell.classList.toggle("owned", owned.has(id));
+    saveOwned(); scheduleMineResults();
+  });
+  document.getElementById("mineSearch").addEventListener("input", function(){
+    const f = norm(this.value);
+    grid.querySelectorAll(".palcell").forEach(c => {
+      c.style.display = !f || fuzzyScore(f, PALS[c.dataset.id].name) >= 0 ? "" : "none";
+    });
+  });
+  document.getElementById("clearOwned").addEventListener("click", () => {
+    owned.clear(); collection = {}; saveCollection(); saveOwned();
+    grid.querySelectorAll(".palcell.owned").forEach(c => c.classList.remove("owned"));
+    scheduleMineResults(); decorateMineCells();
+  });
+  document.getElementById("resetAll").addEventListener("click", () => {
+    if (!confirm("Tout réinitialiser ? (pals cochés, import, token Nitrado mémorisé)")) return;
+    Object.keys(localStorage).filter(k => k.startsWith("pw_")).forEach(k => localStorage.removeItem(k));
+    location.reload();
+  });
+  wireImport(); wireNitrado(); decorateMineCells();
+  scheduleMineResults();
+}
+function scheduleMineResults(){
+  clearTimeout(mineDebounce);
+  mineDebounce = setTimeout(computeMineResults, 250);
+}
+let lastClosure = null;
+function computeMineResults(){
+  const out = document.getElementById("mineResults");
+  if (owned.size < 2){
+    out.innerHTML = owned.size === 0 ? "" : `<div class="infobox" style="margin-top:18px">Coche au moins 2 pals pour voir ce que tu peux obtenir.</div>`;
+    return;
+  }
+  out.innerHTML = `<div class="skl"></div><div class="skl"></div>`;
+  requestClosure([...owned], res => {
+    lastClosure = res;
+    const byGen = {};
+    for (const id in res.gen){
+      const g = res.gen[id];
+      if (g > 0 && !owned.has(id)) (byGen[g] || (byGen[g] = [])).push(id);
+    }
+    const gens = Object.keys(byGen).map(Number).sort((a, b) => a - b);
+    const totalNew = gens.reduce((s, g) => s + byGen[g].length, 0);
+    if (!totalNew){ out.innerHTML = `<div class="infobox" style="margin-top:18px">Aucun nouveau pal accessible avec cette sélection.</div>`; return; }
+    let html = `<div class="count-info" style="margin-top:20px">🎯 <b>${totalNew}</b> nouveau${totalNew > 1 ? "x" : ""} pal${totalNew > 1 ? "s" : ""} accessible${totalNew > 1 ? "s" : ""} par élevage — clique pour voir le plan :</div>`;
+    html += `<div id="planTarget"></div>`;
+    for (const g of gens){
+      html += `<div class="genheader">Génération ${g} — ${byGen[g].length} pal${byGen[g].length > 1 ? "s" : ""} ${g === 1 ? "(croisement direct)" : `(${g} croisements)`}</div><div>`;
+      html += byGen[g].sort((a, b) => parseFloat(a) - parseFloat(b)).map(id =>
+        `<span class="reachchip" data-plan="${id}">${icon(id, '', 26)}${PALS[id].name}</span>`).join("");
+      html += `</div>`;
+    }
+    const missing = ALL_IDS.filter(id => !(id in res.gen) && !PALS[id].monster);
+    html += `<div class="count-info" style="margin-top:16px">Hors de portée : ${missing.length} pals (capture / œufs / mêmes-espèces requis).</div>`;
+    out.innerHTML = html;
+    out.querySelectorAll("[data-plan]").forEach(chip => chip.addEventListener("click", () => showPlan(chip.dataset.plan)));
+  });
+}
+function showPlan(target){
+  const res = lastClosure; if (!res) return;
+  const steps = [], done = new Set();
+  (function expand(id){
+    if (owned.has(id) || done.has(id)) return;
+    const rec = res.recipe[id]; if (!rec) return;
+    expand(rec[0]); expand(rec[1]);
+    done.add(id); steps.push({ a: rec[0], b: rec[1], child: id });
+  })(target);
+  const box = document.getElementById("planTarget");
+  box.innerHTML = `<div class="planbox">
+    <h3>Plan d'élevage → ${PALS[target].name} (${steps.length} croisement${steps.length > 1 ? "s" : ""})</h3>
+    ${steps.map((s, i) => `<div class="planstep">
+      <span class="num">${i + 1}</span>
+      ${icon(s.a, '', 26)}<b>${PALS[s.a].name}</b>${owned.has(s.a) ? " <span style='color:var(--ok);font-size:10px'>✓</span>" : ""}
+      <span style="color:var(--muted)">✕</span>
+      ${icon(s.b, '', 26)}<b>${PALS[s.b].name}</b>${owned.has(s.b) ? " <span style='color:var(--ok);font-size:10px'>✓</span>" : ""}
+      <span style="color:var(--accent)">➜</span>
+      ${icon(s.child, '', 26)}<b style="color:var(--accent)">${PALS[s.child].name}</b>
+    </div>`).join("")}
+  </div>`;
+  if (box.scrollIntoView) box.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
+}
+
+/* ==================== 5. COMBOS SPÉCIAUX ==================== */
+let comboInit = false;
+function initComboTab(){
+  if (comboInit) return;
+  comboInit = true;
+  renderCombos("");
+  document.getElementById("comboSearch").addEventListener("input", function(){ renderCombos(norm(this.value)); });
+}
+function renderCombos(filter){
+  const seen = new Set(), specials = [];
+  for (const key in CORE.EXC){
+    const [a, b] = key.split(","), c = CORE.EXC[key];
+    if (a[0] === "M" && b[0] === "M") continue;
+    const uk = [a, b].sort().join("|") + ">" + c;
+    if (seen.has(uk)) continue;
+    seen.add(uk);
+    specials.push({ a, b, c, gender: (a === "78.0" && b === "79.0") || (a === "79.0" && b === "78.0") });
+  }
+  specials.sort((x, y) => parseFloat(x.c) - parseFloat(y.c));
+  /* uniques : jamais enfant d'un combo spécial → seulement 2 parents identiques */
+  const excChildren = new Set(Object.values(CORE.EXC));
+  const uniques = NOCHILD.filter(id => !PALS[id].monster && !PALS[id].nobreed && !excChildren.has(id));
+  const match = o => !filter || fuzzyScore(filter, PALS[o.a].name) >= 0 || fuzzyScore(filter, PALS[o.b].name) >= 0 || fuzzyScore(filter, PALS[o.c].name) >= 0;
+  const fSpec = specials.filter(match);
+  const fUni = uniques.filter(id => !filter || fuzzyScore(filter, PALS[id].name) >= 0);
+  let html = `<div class="genheader">✨ ${fSpec.length} combos spéciaux</div><div class="combolist">`;
+  html += fSpec.map((s, i) => `<div class="pairchip special" ${reduceMotion ? "" : `style="animation-delay:${Math.min(i * 15, 350)}ms"`}>
+    ${icon(s.a)}<span class="nm">${PALS[s.a].name}</span><span class="x">✕</span>
+    ${icon(s.b)}<span class="nm">${PALS[s.b].name}</span><span class="x">➜</span>
+    ${icon(s.c)}<span class="nm" style="color:var(--accent)">${PALS[s.c].name}</span>
+    ${s.gender ? `<span class="badge">selon genre</span>` : ""}
+  </div>`).join("");
+  html += `</div><div class="genheader" style="margin-top:24px">🔒 ${fUni.length} pals uniques (seulement 2 parents identiques)</div><div class="combolist">`;
+  html += fUni.map(id => `<div class="pairchip">
+    ${icon(id)}<span class="nm">${PALS[id].name}</span><span class="x">✕</span>
+    ${icon(id)}<span class="nm">${PALS[id].name}</span><span class="x">➜</span>
+    ${icon(id)}<span class="nm" style="color:var(--accent)">${PALS[id].name}</span>
+  </div>`).join("");
+  html += `</div>`;
+  document.getElementById("comboContent").innerHTML = html;
+}
+
+
