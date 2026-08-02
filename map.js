@@ -94,25 +94,23 @@ function buildMapUI(){
     drawMarkers();
   }));
 
-  /* bornes du monde (coordonnées sauvegarde) */
-  const xs = mapPOI.map(p => p.x), ys = mapPOI.map(p => p.y);
-  const pad = 60000;
-  const bounds = [[Math.min(...xs) - pad, Math.min(...ys) - pad], [Math.max(...xs) + pad, Math.max(...ys) + pad]];
-  mapObj = L.map("mapCanvas", { crs: L.CRS.Simple, minZoom: -12, maxZoom: -6, zoomSnap: .25,
+  /* passage en coordonnées in-game (même orientation que la carte du jeu) */
+  mapPOI.forEach(p => { const m = savToMap(p.x, p.y); p.mx = m.x; p.my = m.y; });
+  const mxs = mapPOI.map(p => p.mx), mys = mapPOI.map(p => p.my);
+  const pad = 80;
+  const bounds = [[-Math.max(...mys) - pad, Math.min(...mxs) - pad], [-Math.min(...mys) + pad, Math.max(...mxs) + pad]];
+  mapObj = L.map("mapCanvas", { crs: L.CRS.Simple, minZoom: -3, maxZoom: 4, zoomSnap: .25,
     attributionControl: false, preferCanvas: true });
-  /* fond optionnel : place un fichier map.jpg à la racine du site pour l'afficher */
+  /* fond optionnel : dépose un fichier map.jpg à la racine du site pour l'afficher */
   const img = new Image();
-  img.onload = () => {
-    L.imageOverlay(img.src, [[bounds[0][1], bounds[0][0]], [bounds[1][1], bounds[1][0]]], { opacity: .9 }).addTo(mapObj);
-  };
+  img.onload = () => L.imageOverlay(img.src, bounds, { opacity: .92 }).addTo(mapObj);
   img.src = "map.jpg";
   mapLayer = L.layerGroup().addTo(mapObj);
-  mapObj.fitBounds([[bounds[0][1], bounds[0][0]], [bounds[1][1], bounds[1][0]]]);
-  /* affichage des coordonnées au survol */
+  mapObj.fitBounds(bounds);
+  /* coordonnées in-game au survol */
   const info = document.getElementById("mapCoords");
   mapObj.on("mousemove", e => {
-    const m = savToMap(e.latlng.lng, e.latlng.lat);
-    info.textContent = `Coordonnées in-game : ${m.x}, ${m.y}`;
+    info.textContent = `Coordonnées in-game : ${Math.round(e.latlng.lng)}, ${Math.round(-e.latlng.lat)}`;
   });
   drawMarkers();
 }
@@ -124,8 +122,8 @@ function drawMarkers(){
     if (!mapActive[p.c]) continue;
     n++;
     const c = MAP_CATS[p.c];
-    const m = savToMap(p.x, p.y);
-    L.circleMarker([p.y, p.x], { radius: p.c === "ft" || p.c === "dungeon" ? 6 : 5,
+    const m = { x: p.mx, y: p.my };
+    L.circleMarker([-p.my, p.mx], { radius: p.c === "ft" || p.c === "dungeon" ? 6 : 5,
       color: c.color, weight: 1.5, fillColor: c.color, fillOpacity: .55 })
       .bindPopup(`<b>${c.icon} ${p.n}</b><br><span style="opacity:.75">Coordonnées in-game : <b>${m.x}, ${m.y}</b></span>`)
       .addTo(mapLayer);
