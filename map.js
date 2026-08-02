@@ -1,7 +1,7 @@
 "use strict";
 /* ==================== CARTE INTERACTIVE ====================
    Points d'intérêt : dataset MIT palworld-save-pal (oMaN-Rod) via jsDelivr.
-   Fonds de carte : tuiles paldb.cc (Palpagos & Arbre-Monde) — repères calés par régression
+   Fonds de carte : tuiles paldb.cc (Palpagos & Arbre-Monde) : repères calés par régression
    sur leurs marqueurs. Si les tuiles ne répondent pas, un fond est généré depuis les POI. */
 
 /* ---- régions : conversion coordonnées sauvegarde -> coordonnées in-game -> pixels carte ---- */
@@ -106,7 +106,7 @@ async function loadPOI(){
     });
   }
   arr(eff).forEach(p => push("effigy", p.x, p.y, "Statue de Pal Ancien"));
-  arr(rel).forEach(p => push("relic", p.x, p.y, "Relique — " + (RELIC_FR[p.relic_type] || p.relic_type)));
+  arr(rel).forEach(p => push("relic", p.x, p.y, "Relique : " + (RELIC_FR[p.relic_type] || p.relic_type)));
   /* donjons */
   arr(mo).filter(p => p.type === "dungeon").forEach(p => push("dungeon", p.x, p.y, "Donjon"));
   /* prédateurs : positions de map_objects, nommés via bosses.json */
@@ -133,7 +133,7 @@ async function loadPOI(){
     if (pal) push("alpha", b.x, b.y, "Alpha " + pal.name, { pid: pal.id, lv: b.level });
     else {
       const nom = String(b.spawner_id || "").replace(/^BOSS_/i, "").replace(/_/g, " ");
-      push("humanboss", b.x, b.y, "Boss — " + (nom || "humain"), { lv: b.level });
+      push("humanboss", b.x, b.y, "Boss : " + (nom || "humain"), { lv: b.level });
     }
   });
   pts.forEach(p => { if (p.fixed) return; const g = REGIONS[p.reg].toGame(p.x, p.y); p.mx = g.x; p.my = g.y; });
@@ -142,12 +142,12 @@ async function loadPOI(){
 function prettyFT(id){
   if (!id) return "Point de voyage rapide";
   if (/^WatchTower/.test(id)) return "Tour de guet";
-  if (/SkyIsland_BOSS/i.test(id)) return "Tour — Île céleste";
-  if (/WorldTree_LastBoss/i.test(id)) return "Tour finale — Arbre-Monde";
-  if (/WorldTree_lab/i.test(id)) return "Laboratoire — Arbre-Monde";
+  if (/SkyIsland_BOSS/i.test(id)) return "Tour de l'île céleste";
+  if (/WorldTree_LastBoss/i.test(id)) return "Tour finale de l'Arbre-Monde";
+  if (/WorldTree_lab/i.test(id)) return "Laboratoire de l'Arbre-Monde";
   if (/^SkyIsland/.test(id)) return "Point de voyage rapide (île céleste)";
   if (/^WorldTree/.test(id)) return "Point de voyage rapide (Arbre-Monde)";
-  if (/^Boss_/.test(id)) return "Tour — " + id.replace("Boss_", "");
+  if (/^Boss_/.test(id)) return "Tour de boss : " + id.replace("Boss_", "");
   return "Point de voyage rapide";
 }
 

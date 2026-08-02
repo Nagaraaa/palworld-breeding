@@ -30,7 +30,7 @@ const META_BUILDS = [
     total: "+100 % de vitesse de production d'œufs",
     pour: "Les deux parents placés dans l'enclos d'élevage.",
     notes: ["Ne remplis pas les parents de passifs inutiles : chaque passif supplémentaire élargit le tirage et rend le combo voulu plus dur à obtenir. Garde 2+2 ou 3+1.",
-            "Mets Baby-sitter (+30 % production et éclosion) sur un pal de soutien dédié — Braloha par exemple — plutôt que sur un parent."] },
+            "Mets Baby-sitter (+30 % production et éclosion) sur un pal de soutien dédié : Braloha par exemple : plutôt que sur un parent."] },
   { id: "combat", cat: "fight", titre: "Combat polyvalent", icone: "⚔️",
     pass: ["Immortel", "Colère Divine", "Sérénité", "Légende"],
     total: "+75 % d'attaque, vol de vie, régénération et recharge accélérée",

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
 <meta name="description" content="Calculateur de reproduction Palworld v1.0 : croisements, parents, chemins, import de sauvegarde (solo & serveur dédié Nitrado), plan d'élevage de guilde.">
-<title>Pal-Lab — Élevage, Paldex &amp; Carte Palworld</title>
+<title>Pal-Lab, Élevage, Paldex &amp; Carte Palworld</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -56,8 +56,7 @@
     <div class="hero">
       <div class="hero-glow"></div>
       <h2 class="hero-title">Élève mieux.<br><span>Cherche moins.</span></h2>
-      <p class="hero-sub">Tous les croisements du jeu, ton Paldex, les builds meta et la carte —
-      au même endroit, en français, et connecté à <b>ta</b> sauvegarde.</p>
+      <p class="hero-sub">Tous les croisements du jeu, ton Paldex, les builds meta et la carte. Au même endroit, en français, et connecté à <b>ta</b> sauvegarde.</p>
       <div class="hero-cta">
         <button class="btn-primary" data-go="want" data-ico="target" data-ico-size="17"><span class="tlbl">Je veux ce pal</span></button>
         <button class="btn-ghost" data-go="mine" data-ico="save"><span>Importer ma sauvegarde</span></button>
@@ -89,7 +88,7 @@
       <button class="feat" data-go="dex" style="--fc:#38bdf8">
         <span class="feat-ico" data-ico="book" data-ico-size="26"></span>
         <b>Paldex complet</b>
-        <span>Éléments, aptitudes, stats. Trie par « Allumage 8 » et trouve ton ouvrier idéal.</span>
+        <span>Éléments, aptitudes, statistiques. Trie par « Allumage 8 » et trouve ton ouvrier idéal.</span>
       </button>
       <button class="feat" data-go="meta" style="--fc:#a78bfa">
         <span class="feat-ico" data-ico="trophy" data-ico-size="26"></span>
@@ -106,8 +105,7 @@
     <div class="hero-guild">
       <div>
         <b><span data-ico="users" data-ico-size="18"></span> Pensé pour une guilde</b>
-        <p>Importe le <code>Level.sav</code> de ton serveur (ou branche l'API Nitrado), choisis les membres de ta
-        guilde et Pal-Lab calcule ce que <b>vous</b> pouvez élever ensemble — avec le plan étape par étape.</p>
+        <p>Importe le <code>Level.sav</code> de ton serveur (ou branche l'API Nitrado), choisis les membres de ta guilde et Pal-Lab calcule ce que <b>vous</b> pouvez élever ensemble, avec le plan étape par étape.</p>
       </div>
       <button class="btn-ghost" data-go="mine"><span>Configurer ma collection</span><span data-ico="arrow" data-ico-size="16"></span></button>
     </div>
@@ -115,9 +113,8 @@
 
   <section id="tab-want">
     <div class="card">
-      <h2 data-ico="target" data-ico-size="19">Je veux ce pal — toutes les façons de l'obtenir</h2>
-      <div class="sub">Choisis le pal que tu veux obtenir : je te montre <b>toutes les paires de parents</b> qui le donnent,
-      ce que tu peux faire dès maintenant avec ta collection, et le chemin le plus court depuis tes pals.</div>
+      <h2 data-ico="target" data-ico-size="19">Je veux ce pal</h2>
+      <div class="sub">Choisis le pal que tu veux obtenir. Je te montre <b>toutes les paires de parents</b> qui le donnent, ce que tu peux faire dès maintenant avec ta collection, et le chemin le plus court depuis tes pals.</div>
       <div class="pickers">
         <div class="picker" id="pkChild"></div>
         <div class="picker" id="pkWith"></div>
@@ -157,21 +154,21 @@
   <section id="tab-mine">
     <div class="card">
       <h2>Mes Pals</h2>
-      <div class="sub">Coche les pals que tu possèdes (sauvegardé automatiquement dans ton navigateur). Je calcule tout ce que tu peux obtenir en les croisant, génération par génération — clique sur un résultat pour voir le plan d'élevage exact.</div>
+      <div class="sub">Coche les pals que tu possèdes (sauvegardé automatiquement dans ton navigateur). Je calcule tout ce que tu peux obtenir en les croisant, génération par génération, clique sur un résultat pour voir le plan d'élevage exact.</div>
       <div class="toolrow">
         <input type="text" class="searchbar" id="mineSearch" placeholder="Rechercher un pal à cocher…" style="flex:1; margin-top:0;">
         <button class="togglebtn" id="clearOwned">🗑 Décocher tout</button>
         <button class="togglebtn" id="resetAll" title="Efface pals cochés, import, token et chemins mémorisés">♻️ Tout réinitialiser</button>
       </div>
       <div class="dropzone" id="dropzone">
-        📂 <b>Importer</b> — dépose <code>Level.sav</code>, <code>LocalData.sav</code> ou un export <code>guilde-palworld.json</code> ici, ou clique<br>
+        📂 <b>Importer</b>, dépose <code>Level.sav</code>, <code>LocalData.sav</code> ou un export <code>guilde-palworld.json</code> ici, ou clique<br>
         <span style="font-size:11.5px">Solo Steam : <code>%LOCALAPPDATA%\\Pal\\Saved\\SaveGames\\&lt;ID&gt;\\&lt;monde&gt;\\Level.sav</code> ·
         Serveur dédié : récupère <code>Pal/Saved/SaveGames/0/&lt;monde&gt;/Level.sav</code> sur le serveur (FTP/panel) —
         le <code>LocalData.sav</code> local ne contient que ton équipe de 5.<br>Analyse 100 % locale, rien n'est envoyé.</span>
         <input type="file" id="savfile" accept=".sav,.json">
       </div>
       <div class="nitbox" id="nitbox">
-        <div class="nithead">🌐 <b>Import direct depuis ton serveur Nitrado</b> <span>— sans FTP, sans installation</span></div>
+        <div class="nithead">🌐 <b>Import direct depuis ton serveur Nitrado</b> <span>sans FTP, sans installation</span></div>
         <div class="toolrow" style="margin-top:0">
           <input type="password" class="searchbar" id="nitToken" placeholder="Token API Nitrado (long life token)" style="flex:1; margin-top:0">
           <button class="togglebtn" id="nitGo">📥 Récupérer ma boîte</button>
@@ -204,7 +201,7 @@
 
   <section id="tab-dex">
     <div class="card">
-      <h2 data-ico="book" data-ico-size="19">Paldex — <span id="dexCount">…</span> pals</h2>
+      <h2 data-ico="book" data-ico-size="19">Paldex : <span id="dexCount">…</span> pals</h2>
       <div class="sub">Fiches complètes : éléments, aptitudes de travail, statistiques, rareté, prix. Clique un pal pour tout voir.</div>
       <div id="dexFilters"></div>
       <div class="dexgrid" id="dexGrid"></div>
@@ -213,7 +210,7 @@
 
   <section id="tab-passives">
     <div class="card">
-      <h2 data-ico="dna" data-ico-size="19">Compétences passives — <span id="passCount">…</span></h2>
+      <h2 data-ico="dna" data-ico-size="19">Compétences passives : <span id="passCount">…</span></h2>
       <div class="sub">Les 114 passifs que peuvent porter tes pals, classés par rang. Cherche par nom ou par effet
       (« attaque », « travail », « monture »…).</div>
       <div id="passFilters"></div>
@@ -223,7 +220,7 @@
 
   <section id="tab-meta">
     <div class="card">
-      <h2 data-ico="trophy" data-ico-size="19">Meta — les builds de passifs qui comptent</h2>
+      <h2 data-ico="trophy" data-ico-size="19">Builds meta par rôle</h2>
       <div class="sub">Les combinaisons de 4 passifs à viser selon le rôle du pal (un pal en porte 4 maximum).
       Effets vérifiés sur les données du jeu · méta Palworld 1.0. Clique un passif pour le retrouver dans la liste complète,
       ou un pal conseillé pour ouvrir sa fiche.</div>
@@ -239,7 +236,7 @@
   <section id="tab-map">
     <div class="card">
       <h2 data-ico="map" data-ico-size="19">Carte interactive</h2>
-      <div class="sub">Les deux cartes du jeu — <b>Îles Palpagos</b> et <b>Arbre-Monde</b> — avec voyage rapide, tours de guet, statues de Pal Ancien, donjons, alphas (nommés), prédateurs et reliques. Clique un marqueur pour ses coordonnées in-game.</div>
+      <div class="sub">Les deux cartes du jeu, <b>Îles Palpagos</b> et <b>Arbre-Monde</b>, avec voyage rapide, tours de guet, statues de Pal Ancien, donjons, alphas (nommés), prédateurs et reliques. Clique un marqueur pour ses coordonnées in-game.</div>
       <div id="mapStatus"></div>
       <div id="mapFilters"></div>
       <div class="mapwrap"><div id="mapCanvas"></div>
@@ -255,7 +252,7 @@
 <div id="modal"><div class="modalbox"><div class="modalhead"><b id="modalTitle"></b><button id="modalClose">✕</button></div><div id="modalBody"></div></div></div>
 
 <footer>
-  <b style="color:var(--accent)">Pal-Lab</b> — créé par <b class="credit">Nagara</b> · outil non-officiel · données extraites des fichiers du jeu Palworld v1.0
+  <b style="color:var(--accent)">Pal-Lab</b>, créé par <b class="credit">Nagara</b> · outil non-officiel · données extraites des fichiers du jeu Palworld v1.0
   (via <a href="https://palworld.kimpton.io" target="_blank">palworld.kimpton.io</a>) ·
   Icônes et noms © <a href="https://www.pocketpair.jp/" target="_blank">Pocketpair</a> ·
   Calculs vérifiés sur les 88 804 paires du jeu · décodeur Oodle : <a href="https://github.com/SnosMe/ooz-wasm" target="_blank">ooz-wasm</a> (GPL-3.0)
