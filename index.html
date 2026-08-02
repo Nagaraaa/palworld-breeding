@@ -98,6 +98,7 @@
         <div class="toolrow" style="margin-top:0">
           <input type="password" class="searchbar" id="nitToken" placeholder="Token API Nitrado (long life token)" style="flex:1; margin-top:0">
           <button class="togglebtn" id="nitGo">📥 Récupérer ma boîte</button>
+          <button class="togglebtn" id="nitShare" title="Copier un lien qui configure le token automatiquement">🔗 Lien pour ma guilde</button>
           <button class="togglebtn" id="nitForget" title="Oublier le token et le chemin mémorisés">🗑</button>
         </div>
         <div class="hint">Pour créer le token : connecte-toi sur nitrado.net, puis ouvre
@@ -146,16 +147,15 @@
   <section id="tab-map">
     <div class="card">
       <h2>🗺️ Carte interactive</h2>
-      <div class="sub">Points de voyage rapide, tours de guet, statues de Pal Ancien, donjons, alphas, prédateurs et reliques.
-      Clique un marqueur pour obtenir ses coordonnées à saisir en jeu.</div>
+      <div class="sub">Les deux cartes du jeu — <b>Îles Palpagos</b> et <b>Arbre-Monde</b> — avec voyage rapide, tours de guet, statues de Pal Ancien, donjons, alphas (nommés), prédateurs et reliques. Clique un marqueur pour ses coordonnées in-game.</div>
       <div id="mapStatus"></div>
       <div id="mapFilters"></div>
       <div class="mapwrap"><div id="mapCanvas"></div>
         <div class="mapinfo"><span id="mapCoords">Survole la carte pour lire les coordonnées</span>
         · <b id="mapShown">0</b> marqueurs affichés</div>
       </div>
-      <div class="infobox">💡 Le fond de carte est volontairement schématique (aucune image du jeu n'est redistribuée ici).
-      Pour afficher une vraie carte, dépose une image nommée <code>map.jpg</code> à la racine du site : elle sera utilisée automatiquement.</div>
+      <div class="count-info" style="text-align:right">Fonds de carte : <a href="https://paldb.cc" target="_blank" style="color:var(--accent2)">paldb.cc</a>
+      · points d'intérêt : <a href="https://github.com/oMaN-Rod/palworld-save-pal" target="_blank" style="color:var(--accent2)">palworld-save-pal</a> (MIT)</div>
     </div>
   </section>
 </main>

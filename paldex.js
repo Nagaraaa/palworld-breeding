@@ -42,7 +42,7 @@ function id2code(id){
 function pspOf(id){ return PSP_PALS ? PSP_PALS[id2code(id).toLowerCase()] : null; }
 
 /* ==================== ONGLET PALDEX ==================== */
-let paldexInit = false, dexFilters = { q: "", elem: "", work: "" };
+let paldexInit = false, dexFilters = { q: "", elem: "", work: "", min: 1, sort: "dex" };
 function initPaldexTab(){
   if (paldexInit) return;
   paldexInit = true;
@@ -60,6 +60,25 @@ function initPaldexTab(){
         <button class="chipf on" data-work="">Toutes aptitudes</button>
         ${Object.keys(WORK_FR).map(w => `<button class="chipf" data-work="${w}">${WORK_ICON[w]} ${WORK_FR[w]}</button>`).join("")}
       </div>
+    </div>
+    <div class="toolrow sortrow">
+      <label class="sortlbl">Trier par
+        <select id="dexSort">
+          <option value="dex">N° Paldeck</option>
+          <option value="name">Nom</option>
+          <optgroup label="Aptitudes de travail">
+            ${Object.keys(WORK_FR).map(w => `<option value="w:${w}">${WORK_ICON[w]} ${WORK_FR[w]} (niveau ↓)</option>`).join("")}
+          </optgroup>
+          <optgroup label="Statistiques">
+            <option value="hp">PV ↓</option><option value="attack">Attaque ↓</option>
+            <option value="defense">Défense ↓</option><option value="rarity">Rareté ↓</option>
+            <option value="price">Prix ↓</option><option value="breed">Puissance d'élevage ↓</option>
+          </optgroup>
+        </select>
+      </label>
+      <label class="sortlbl" id="minWrap" style="display:none">Niveau minimum
+        <select id="dexMin">${[1,2,3,4,5,6,7,8].map(n => `<option value="${n}">${n}+</option>`).join("")}</select>
+      </label>
     </div>`;
   document.getElementById("dexSearch").addEventListener("input", function(){ dexFilters.q = norm(this.value); renderDex(); });
   wrap.querySelectorAll("[data-elem]").forEach(b => b.addEventListener("click", () => {
@@ -70,12 +89,31 @@ function initPaldexTab(){
   wrap.querySelectorAll("[data-work]").forEach(b => b.addEventListener("click", () => {
     dexFilters.work = b.dataset.work;
     wrap.querySelectorAll("[data-work]").forEach(x => x.classList.toggle("on", x === b));
+    /* choisir une aptitude trie automatiquement par son niveau */
+    dexFilters.sort = b.dataset.work ? "w:" + b.dataset.work : "dex";
+    document.getElementById("dexSort").value = dexFilters.sort;
+    syncMinVisible();
     renderDex();
   }));
+  document.getElementById("dexSort").addEventListener("change", function(){
+    dexFilters.sort = this.value;
+    /* trier par une aptitude filtre implicitement dessus */
+    if (this.value.startsWith("w:")){
+      dexFilters.work = this.value.slice(2);
+      wrap.querySelectorAll("[data-work]").forEach(x => x.classList.toggle("on", x.dataset.work === dexFilters.work));
+    }
+    syncMinVisible();
+    renderDex();
+  });
+  document.getElementById("dexMin").addEventListener("change", function(){ dexFilters.min = +this.value; renderDex(); });
   document.getElementById("dexGrid").innerHTML = `<div class="skl"></div><div class="skl"></div><div class="skl"></div>`;
   loadPspPals().then(() => renderDex()).catch(() => {
     document.getElementById("dexGrid").innerHTML = `<div class="warnbox">Impossible de charger les détails des pals (réseau ?). Réessaie plus tard.</div>`;
   });
+}
+function syncMinVisible(){
+  const w = document.getElementById("minWrap");
+  if (w) w.style.display = dexFilters.work ? "" : "none";
 }
 function renderDex(){
   const grid = document.getElementById("dexGrid");
@@ -84,16 +122,28 @@ function renderDex(){
     const p = pspOf(id);
     if (dexFilters.q && fuzzyScore(dexFilters.q, PALS[id].name) < 0 && !palNo(id).toLowerCase().includes(dexFilters.q)) return false;
     if (dexFilters.elem && !(p && (p.element_types || []).includes(dexFilters.elem))) return false;
-    if (dexFilters.work && !(p && p.work_suitability && p.work_suitability[dexFilters.work] > 0)) return false;
+    if (dexFilters.work && !(p && p.work_suitability && p.work_suitability[dexFilters.work] >= dexFilters.min)) return false;
     return true;
   });
+  /* tri */
+  const s = dexFilters.sort;
+  const statOf = (id, k) => { const q = pspOf(id) || {}; return k === "breed" ? -PALS[id].p :
+    k === "rarity" ? (q.rarity || 0) : k === "price" ? (q.price || 0) : ((q.scaling || {})[k] || 0); };
+  if (s.startsWith("w:")){
+    const w = s.slice(2);
+    ids.sort((a, b) => ((pspOf(b) || {}).work_suitability || {})[w] - ((pspOf(a) || {}).work_suitability || {})[w]
+      || parseFloat(a) - parseFloat(b));
+  } else if (s === "name") ids.sort((a, b) => PALS[a].name.localeCompare(PALS[b].name));
+  else if (s !== "dex") ids.sort((a, b) => statOf(b, s) - statOf(a, s) || parseFloat(a) - parseFloat(b));
   document.getElementById("dexCount").textContent = ids.length;
   grid.innerHTML = ids.map((id, i) => {
     const p = pspOf(id) || {};
     const els = (p.element_types || []).map(e =>
       `<span class="elem" style="--c:${ELEM_COLOR[e]}">${ELEM_FR[e]}</span>`).join("");
+    const hi = dexFilters.sort.startsWith("w:") ? dexFilters.sort.slice(2) : null;
     const works = Object.entries(p.work_suitability || {}).filter(([, v]) => v > 0)
-      .map(([w, v]) => `<span class="wk" title="${WORK_FR[w]} ${v}">${WORK_ICON[w]}<b>${v}</b></span>`).join("");
+      .sort((a, b) => (b[0] === hi ? 1 : 0) - (a[0] === hi ? 1 : 0))
+      .map(([w, v]) => `<span class="wk${w === hi ? " hi" : ""}" title="${WORK_FR[w]} niveau ${v}">${WORK_ICON[w]}<b>${v}</b></span>`).join("");
     return `<div class="dexcard" data-id="${id}" ${reduceMotion ? "" : `style="animation-delay:${Math.min(i * 12, 400)}ms"`}>
       ${icon(id, "", 46)}
       <div class="dexmain">
@@ -101,6 +151,7 @@ function renderDex(){
         <div class="dexels">${els}</div>
         ${works ? `<div class="dexwork">${works}</div>` : ""}
       </div>
+      ${hi ? `<span class="dexrank">#${i + 1}</span>` : ""}
       ${owned.has(id) ? `<span class="dexown" title="Dans ta collection">✓</span>` : ""}
     </div>`;
   }).join("") || `<div class="infobox">Aucun pal ne correspond à ces filtres.</div>`;

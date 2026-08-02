@@ -1,10 +1,26 @@
 "use strict";
 /* ==================== CARTE INTERACTIVE ====================
    Points d'intérêt : dataset MIT palworld-save-pal (oMaN-Rod) via jsDelivr.
-   Conversion coordonnées sauvegarde -> coordonnées in-game : palworld-coord (palworld.lol). */
+   Fonds de carte : tuiles paldb.cc (Palpagos & Arbre-Monde) — repères calés par régression
+   sur leurs marqueurs. Si les tuiles ne répondent pas, un fond est généré depuis les POI. */
 
-const MAP_TRANSL_X = 123888, MAP_TRANSL_Y = 158000, MAP_SCALE = 459;
-function savToMap(x, y){ return { x: Math.round((y - MAP_TRANSL_Y) / MAP_SCALE), y: Math.round((x + MAP_TRANSL_X) / MAP_SCALE) }; }
+/* ---- régions : conversion coordonnées sauvegarde -> coordonnées in-game -> pixels carte ---- */
+const REGIONS = {
+  main: {
+    label: "🏝️ Îles Palpagos", tiles: "https://cdn.paldb.cc/image/map8/z{z}x{x}y{y}.webp",
+    toGame: (x, y) => ({ x: Math.round((y - 158000) / 459), y: Math.round((x + 123888) / 459) }),
+    toPix:  (gx, gy) => [0.16221 * gy - 167.25513, 0.16221 * gx + 311.8397],
+    test:   (x, y) => !(x > 400000 && y < -450000)
+  },
+  tree: {
+    label: "🌳 Arbre-Monde", tiles: "https://cdn.paldb.cc/image/treemap8/z{z}x{x}y{y}.webp",
+    toGame: (x, y) => ({ x: Math.round(y * 0.00074909 + 485.2784), y: Math.round(x * 0.00074853 + 388.8339) }),
+    toPix:  (gx, gy) => [2.00281 * gy - 1811.57135, 1.99916 * gx + 255.58671],
+    test:   (x, y) => x > 400000 && y < -450000
+  }
+};
+const TILE_BOUNDS = [[-512, 0], [0, 512]];
+function savToMap(x, y){ return REGIONS.main.toGame(x, y); }   /* compat */
 
 const MAP_CATS = {
   ft:      { label: "Voyage rapide", icon: "🚩", color: "#5eead4" },
@@ -21,54 +37,64 @@ const RELIC_FR = { jump_power: "Puissance de saut", status_ailment_resist: "Rés
   climb_speed: "Escalade", food_decay_reduction: "Conservation des aliments",
   rainbow_passive_rate: "Taux de passif arc-en-ciel", sphere_homing: "Sphères à tête chercheuse" };
 
-let mapInit = false, mapPOI = null, mapActive = {}, mapObj = null, mapLayer = null;
-Object.keys(MAP_CATS).forEach(k => mapActive[k] = true);
+let mapInit = false, mapPOI = null, mapActive = {}, mapObj = null, mapLayers = {},
+    mapRegion = "main", mapQuery = "", tileLayer = null, bossNames = null;
+try { mapActive = JSON.parse(localStorage.getItem("pw_map_cats") || "null") || {}; } catch(e){}
+Object.keys(MAP_CATS).forEach(k => { if (!(k in mapActive)) mapActive[k] = true; });
+try { mapRegion = localStorage.getItem("pw_map_region") || "main"; } catch(e){}
 
 function initMapTab(){
   if (mapInit) return;
   mapInit = true;
   const status = document.getElementById("mapStatus");
   status.innerHTML = `<div class="count-info">🗺️ Chargement de la carte et des points d'intérêt…</div>`;
-  Promise.all([loadLeaflet(), loadPOI()]).then(([, poi]) => {
-    mapPOI = poi;
-    buildMapUI();
-  }).catch(err => {
-    status.innerHTML = `<div class="warnbox">Impossible de charger la carte : ${err.message}</div>`;
-  });
+  Promise.all([loadLeaflet(), loadPOI()]).then(([, poi]) => { mapPOI = poi; buildMapUI(); })
+    .catch(err => { status.innerHTML = `<div class="warnbox">Impossible de charger la carte : ${err.message}</div>`; });
 }
-function loadLeaflet(){
-  if (window.L) return Promise.resolve();
-  return new Promise((res, rej) => {
-    const css = document.createElement("link");
-    css.rel = "stylesheet"; css.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
-    document.head.appendChild(css);
-    const s = document.createElement("script");
-    s.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
-    s.onload = res; s.onerror = () => rej(new Error("Leaflet indisponible"));
-    document.head.appendChild(s);
-  });
+function loadCss(href){ return new Promise(r => { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.onload = r; l.onerror = r; document.head.appendChild(l); }); }
+function loadJs(src){ return new Promise((r, j) => { const s = document.createElement("script"); s.src = src; s.onload = r; s.onerror = () => j(new Error("script indisponible")); document.head.appendChild(s); }); }
+async function loadLeaflet(){
+  if (!window.L){
+    await loadCss("https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css");
+    await loadJs("https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js");
+  }
+  if (!window.L.markerClusterGroup){
+    await loadCss("https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css");
+    await loadJs("https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js").catch(() => {});
+  }
 }
 async function loadPOI(){
   const B = PSP_BASE;
-  const [ft, eff, mo, rel] = await Promise.all([
+  const [ft, eff, mo, rel, bosses] = await Promise.all([
     fetch(B + "fast_travel_points.json").then(r => r.json()),
     fetch(B + "effigies.json").then(r => r.json()),
     fetch(B + "map_objects.json").then(r => r.json()),
-    fetch(B + "relics.json").then(r => r.json())
+    fetch(B + "relics.json").then(r => r.json()),
+    fetch(B + "bosses.json").then(r => r.json()).catch(() => [])
   ]);
-  const pts = [];
   const arr = o => Array.isArray(o) ? o : Object.values(o);
-  arr(ft).forEach(p => {
-    const isTower = /UnlockMapPoint/.test(p.class || "");
-    pts.push({ c: isTower ? "tower" : "ft", x: p.x, y: p.y, n: prettyFT(p.id) });
+  /* nom + niveau des alphas, indexés par position arrondie */
+  bossNames = {};
+  arr(bosses).forEach(b => {
+    const code = String(b.character_id || "").replace(/^BOSS_|^PREDATOR_/i, "");
+    const id = typeof CODE2ID !== "undefined" ? CODE2ID[code.toLowerCase()] : null;
+    bossNames[Math.round(b.x / 100) + "|" + Math.round(b.y / 100)] =
+      (id && typeof PALS !== "undefined" && PALS[id] ? PALS[id].name : code) + (b.level ? " · Nv." + b.level : "");
   });
-  arr(eff).forEach(p => pts.push({ c: "effigy", x: p.x, y: p.y, n: "Statue de Pal Ancien" }));
+  const pts = [];
+  const push = (c, x, y, n) => {
+    const reg = REGIONS.tree.test(x, y) ? "tree" : "main";
+    const g = REGIONS[reg].toGame(x, y);
+    pts.push({ c, x, y, n, reg, mx: g.x, my: g.y });
+  };
+  arr(ft).forEach(p => push(/UnlockMapPoint/.test(p.class || "") ? "tower" : "ft", p.x, p.y, prettyFT(p.id)));
+  arr(eff).forEach(p => push("effigy", p.x, p.y, "Statue de Pal Ancien"));
   arr(mo).forEach(p => {
     const c = p.type === "dungeon" ? "dungeon" : p.type === "alpha_pal" ? "alpha" : "predator";
-    pts.push({ c, x: p.x, y: p.y, n: MAP_CATS[c].label });
+    const nm = bossNames[Math.round(p.x / 100) + "|" + Math.round(p.y / 100)];
+    push(c, p.x, p.y, nm ? (c === "alpha" ? "Alpha " : c === "predator" ? "Prédateur " : "") + nm : MAP_CATS[c].label);
   });
-  arr(rel).forEach(p => pts.push({ c: "relic", x: p.x, y: p.y,
-    n: "Relique — " + (RELIC_FR[p.relic_type] || p.relic_type) }));
+  arr(rel).forEach(p => push("relic", p.x, p.y, "Relique — " + (RELIC_FR[p.relic_type] || p.relic_type)));
   return pts;
 }
 function prettyFT(id){
@@ -79,55 +105,144 @@ function prettyFT(id){
   if (/^Boss_/.test(id)) return "Zone de boss — " + id.replace("Boss_", "");
   return "Point de voyage rapide";
 }
-function buildMapUI(){
-  const counts = {};
-  mapPOI.forEach(p => counts[p.c] = (counts[p.c] || 0) + 1);
-  document.getElementById("mapStatus").innerHTML =
-    `<div class="count-info">🗺️ <b>${mapPOI.length.toLocaleString("fr")}</b> points d'intérêt · clique un marqueur pour ses coordonnées in-game</div>`;
-  document.getElementById("mapFilters").innerHTML = `<div class="chiprow">` +
-    Object.entries(MAP_CATS).map(([k, c]) =>
-      `<button class="chipf on" data-cat="${k}" style="--c:${c.color}">${c.icon} ${c.label} <span class="cnt2">${counts[k] || 0}</span></button>`).join("") +
-    `</div>`;
-  document.querySelectorAll("#mapFilters [data-cat]").forEach(b => b.addEventListener("click", () => {
-    mapActive[b.dataset.cat] = !mapActive[b.dataset.cat];
-    b.classList.toggle("on", mapActive[b.dataset.cat]);
-    drawMarkers();
-  }));
 
-  /* passage en coordonnées in-game (même orientation que la carte du jeu) */
-  mapPOI.forEach(p => { const m = savToMap(p.x, p.y); p.mx = m.x; p.my = m.y; });
-  const mxs = mapPOI.map(p => p.mx), mys = mapPOI.map(p => p.my);
-  const pad = 80;
-  const bounds = [[-Math.max(...mys) - pad, Math.min(...mxs) - pad], [-Math.min(...mys) + pad, Math.max(...mxs) + pad]];
-  mapObj = L.map("mapCanvas", { crs: L.CRS.Simple, minZoom: -3, maxZoom: 4, zoomSnap: .25,
-    attributionControl: false, preferCanvas: true });
-  /* fond optionnel : dépose un fichier map.jpg à la racine du site pour l'afficher */
-  const img = new Image();
-  img.onload = () => L.imageOverlay(img.src, bounds, { opacity: .92 }).addTo(mapObj);
-  img.src = "map.jpg";
-  mapLayer = L.layerGroup().addTo(mapObj);
-  mapObj.fitBounds(bounds);
-  /* coordonnées in-game au survol */
+/* ---------- fond de secours généré depuis la densité des POI ---------- */
+function buildBackdrop(pts){
+  const W = 900, H = 900, GW = 200, GH = 200;
+  const g = new Float32Array(GW * GH);
+  const lats = pts.map(p => p.lat), lngs = pts.map(p => p.lng);
+  const minX = Math.min(...lngs) - 20, maxX = Math.max(...lngs) + 20;
+  const minY = Math.min(...lats) - 20, maxY = Math.max(...lats) + 20;
+  for (const p of pts){
+    const cx = Math.round((p.lng - minX) / (maxX - minX) * (GW - 1));
+    const cy = Math.round((1 - (p.lat - minY) / (maxY - minY)) * (GH - 1));
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++){
+      const x = cx + dx, y = cy + dy;
+      if (x >= 0 && y >= 0 && x < GW && y < GH) g[y * GW + x] += Math.exp(-(dx * dx + dy * dy) / 5);
+    }
+  }
+  const tmp = new Float32Array(GW * GH), R = 3;
+  for (let pass = 0; pass < 3; pass++){
+    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++){
+      let s = 0, n = 0;
+      for (let k = -R; k <= R; k++){ const xx = x + k; if (xx >= 0 && xx < GW){ s += g[y * GW + xx]; n++; } }
+      tmp[y * GW + x] = s / n;
+    }
+    for (let x = 0; x < GW; x++) for (let y = 0; y < GH; y++){
+      let s = 0, n = 0;
+      for (let k = -R; k <= R; k++){ const yy = y + k; if (yy >= 0 && yy < GH){ s += tmp[yy * GW + x]; n++; } }
+      g[y * GW + x] = s / n;
+    }
+  }
+  let mx = 0; for (let i = 0; i < g.length; i++) mx = Math.max(mx, g[i]);
+  for (let i = 0; i < g.length; i++) g[i] /= (mx || 1);
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#0c1626"; ctx.fillRect(0, 0, W, H);
+  const img = ctx.getImageData(0, 0, W, H), d = img.data;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){
+    const v = g[Math.floor(y / H * GH) * GW + Math.floor(x / W * GW)], i = (y * W + x) * 4;
+    if (v > .085){ const t = Math.min(1, (v - .085) / .3); d[i] = 38 + t * 52; d[i+1] = 48 + t * 58; d[i+2] = 58 + t * 60; }
+    else if (v > .055){ const t = (v - .055) / .03; d[i] = 18 + t * 22; d[i+1] = 40 + t * 28; d[i+2] = 58 + t * 20; }
+  }
+  ctx.putImageData(img, 0, 0);
+  return { url: cv.toDataURL("image/png"), bounds: [[minY, minX], [maxY, maxX]] };
+}
+
+function buildMapUI(){
+  document.getElementById("mapFilters").innerHTML =
+    `<div class="chiprow" id="mapRegions">${Object.entries(REGIONS).map(([k, r]) =>
+        `<button class="chipf reg${mapRegion === k ? " on" : ""}" data-reg="${k}" style="--c:#f3ca63">${r.label}</button>`).join("")}</div>
+     <div class="chiprow" id="mapCats">${Object.entries(MAP_CATS).map(([k, c]) =>
+        `<button class="chipf${mapActive[k] ? " on" : ""}" data-cat="${k}" style="--c:${c.color}">${c.icon} ${c.label} <span class="cnt2" data-cnt="${k}">0</span></button>`).join("")}
+      <button class="chipf" id="mapAll">Tout afficher</button><button class="chipf" id="mapNone">Tout masquer</button></div>
+     <input type="text" class="searchbar" id="mapSearch" placeholder="Filtrer (ex. « donjon », « relique capture », « Anubis »)…">`;
+
+  mapObj = L.map("mapCanvas", { crs: L.CRS.Simple, minZoom: 0, maxZoom: 6, zoomSnap: .5,
+    attributionControl: false, maxBounds: TILE_BOUNDS, maxBoundsViscosity: .9 });
   const info = document.getElementById("mapCoords");
   mapObj.on("mousemove", e => {
-    info.textContent = `Coordonnées in-game : ${Math.round(e.latlng.lng)}, ${Math.round(-e.latlng.lat)}`;
+    const R = REGIONS[mapRegion];
+    const gx = Math.round((e.latlng.lng - R.toPix(0, 0)[1]) / (R.toPix(1, 0)[1] - R.toPix(0, 0)[1]));
+    const gy = Math.round((e.latlng.lat - R.toPix(0, 0)[0]) / (R.toPix(0, 1)[0] - R.toPix(0, 0)[0]));
+    info.textContent = `Coordonnées in-game : ${gx}, ${gy}`;
   });
+
+  document.querySelectorAll("#mapRegions [data-reg]").forEach(b => b.addEventListener("click", () => {
+    mapRegion = b.dataset.reg;
+    try { localStorage.setItem("pw_map_region", mapRegion); } catch(e){}
+    document.querySelectorAll("#mapRegions [data-reg]").forEach(x => x.classList.toggle("on", x === b));
+    switchRegion();
+  }));
+  document.querySelectorAll("#mapCats [data-cat]").forEach(b => b.addEventListener("click", () => {
+    mapActive[b.dataset.cat] = !mapActive[b.dataset.cat];
+    b.classList.toggle("on", mapActive[b.dataset.cat]);
+    try { localStorage.setItem("pw_map_cats", JSON.stringify(mapActive)); } catch(e){}
+    drawMarkers();
+  }));
+  document.getElementById("mapAll").addEventListener("click", () => setAllCats(true));
+  document.getElementById("mapNone").addEventListener("click", () => setAllCats(false));
+  document.getElementById("mapSearch").addEventListener("input", function(){ mapQuery = norm(this.value); drawMarkers(); });
+  switchRegion();
+}
+function setAllCats(v){
+  Object.keys(MAP_CATS).forEach(k => mapActive[k] = v);
+  document.querySelectorAll("#mapCats [data-cat]").forEach(b => b.classList.toggle("on", v));
+  try { localStorage.setItem("pw_map_cats", JSON.stringify(mapActive)); } catch(e){}
+  drawMarkers();
+}
+function switchRegion(){
+  if (tileLayer){ mapObj.removeLayer(tileLayer); tileLayer = null; }
+  let failed = 0;
+  tileLayer = L.tileLayer(REGIONS[mapRegion].tiles, { minZoom: 0, maxZoom: 6, maxNativeZoom: 8,
+    tileSize: 512, noWrap: true, bounds: TILE_BOUNDS, className: "mapbg" });
+  tileLayer.on("tileerror", () => {
+    if (++failed !== 4) return;                       /* fond de secours généré */
+    mapObj.removeLayer(tileLayer); tileLayer = null;
+    const pts = mapPOI.filter(p => p.reg === mapRegion).map(p => {
+      const [lat, lng] = REGIONS[mapRegion].toPix(p.mx, p.my); return { lat, lng }; });
+    if (!pts.length) return;
+    const bg = buildBackdrop(pts);
+    tileLayer = L.imageOverlay(bg.url, bg.bounds, { opacity: .95, className: "mapbg" }).addTo(mapObj);
+  });
+  tileLayer.addTo(mapObj);
+  mapObj.setMaxBounds(TILE_BOUNDS);
+  mapObj.fitBounds(TILE_BOUNDS);
   drawMarkers();
 }
 function drawMarkers(){
-  if (!mapLayer) return;
-  mapLayer.clearLayers();
+  if (!mapObj) return;
+  Object.values(mapLayers).forEach(l => mapObj.removeLayer(l));
+  mapLayers = {};
+  const R = REGIONS[mapRegion];
+  const inReg = mapPOI.filter(p => p.reg === mapRegion);
+  const counts = {};
+  inReg.forEach(p => counts[p.c] = (counts[p.c] || 0) + 1);
+  document.querySelectorAll("[data-cnt]").forEach(el => el.textContent = counts[el.dataset.cnt] || 0);
   let n = 0;
-  for (const p of mapPOI){
-    if (!mapActive[p.c]) continue;
-    n++;
-    const c = MAP_CATS[p.c];
-    const m = { x: p.mx, y: p.my };
-    L.circleMarker([-p.my, p.mx], { radius: p.c === "ft" || p.c === "dungeon" ? 6 : 5,
-      color: c.color, weight: 1.5, fillColor: c.color, fillOpacity: .55 })
-      .bindPopup(`<b>${c.icon} ${p.n}</b><br><span style="opacity:.75">Coordonnées in-game : <b>${m.x}, ${m.y}</b></span>`)
-      .addTo(mapLayer);
+  const useCluster = !!L.markerClusterGroup;
+  for (const cat in MAP_CATS){
+    if (!mapActive[cat]) continue;
+    const c = MAP_CATS[cat];
+    const pts = inReg.filter(p => p.c === cat && (!mapQuery || norm(p.n + " " + c.label).includes(mapQuery)));
+    if (!pts.length) continue;
+    n += pts.length;
+    const layer = useCluster
+      ? L.markerClusterGroup({ maxClusterRadius: z => z >= 4 ? 18 : 42, showCoverageOnHover: false,
+          chunkedLoading: true, iconCreateFunction: cl => L.divIcon({ className: "poicluster",
+            html: `<span style="--c:${c.color}">${cl.getChildCount()}</span>`, iconSize: [30, 30] }) })
+      : L.layerGroup();
+    for (const p of pts){
+      const [lat, lng] = R.toPix(p.mx, p.my);
+      const mk = L.marker([lat, lng], { icon: L.divIcon({ className: "poimk",
+        html: `<span style="--c:${c.color}">${c.icon}</span>`, iconSize: [22, 22] }) });
+      mk.bindPopup(`<b>${c.icon} ${p.n}</b><br><span class="popc">Coordonnées in-game : <b>${p.mx}, ${p.my}</b></span>`);
+      layer.addLayer(mk);
+    }
+    layer.addTo(mapObj);
+    mapLayers[cat] = layer;
   }
-  const el = document.getElementById("mapShown");
-  if (el) el.textContent = n.toLocaleString("fr");
+  const st = document.getElementById("mapStatus");
+  if (st) st.innerHTML = `<div class="count-info">🗺️ <b>${n.toLocaleString("fr")}</b> points affichés sur <b>${inReg.length.toLocaleString("fr")}</b> dans cette région
+    · ${mapPOI.length.toLocaleString("fr")} au total · clique un marqueur pour ses coordonnées in-game</div>`;
 }

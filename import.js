@@ -408,11 +408,27 @@ async function nitDownload(sid, savPath, token){
   }
   return new File([new Blob(chunks)], "Level.sav");
 }
+/* lien de configuration partagé : #setup=<token> */
+(function consumeSetupLink(){
+  const m = /[#&]setup=([^&]+)/.exec(location.hash);
+  if (!m) return;
+  try { localStorage.setItem("pw_nit_token", decodeURIComponent(m[1])); } catch(e){}
+  history.replaceState(null, "", location.pathname + "#mine");
+})();
 function wireNitrado(){
   const tok = document.getElementById("nitToken"), go = document.getElementById("nitGo"), fg = document.getElementById("nitForget");
   if (!tok || tok.dataset.wired) return;
   tok.dataset.wired = "1";
   tok.value = localStorage.getItem("pw_nit_token") || "";
+  const share = document.getElementById("nitShare");
+  if (share) share.addEventListener("click", () => {
+    const t = tok.value.trim();
+    if (!t){ nitSay(`<div class="warnbox">Renseigne d'abord ton token.</div>`); return; }
+    const url = location.origin + location.pathname + "#setup=" + encodeURIComponent(t);
+    navigator.clipboard.writeText(url).then(
+      () => nitSay(`<div class="infobox">🔗 Lien copié ! Envoie-le à ta guilde : en l'ouvrant, le token se configure tout seul et il leur suffit de cliquer « Récupérer ma boîte ».</div>`),
+      () => nitSay(`<div class="infobox">Copie ce lien manuellement :<br><code style="word-break:break-all">${url}</code></div>`));
+  });
   fg.addEventListener("click", () => {
     ["pw_nit_token", "pw_nit_service", "pw_nit_path"].forEach(k => localStorage.removeItem(k));
     tok.value = ""; nitSay(`<div class="count-info">Token et chemin oubliés.</div>`);
