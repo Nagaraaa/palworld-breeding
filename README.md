@@ -1,4 +1,4 @@
-# Palworld — Compagnon de guilde (élevage, paldex, carte)
+# 🧪 Pal-Lab — le compagnon Palworld de ta guilde
 
 Site statique, aucun build : https://palworld-breeding-mocha.vercel.app
 

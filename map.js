@@ -13,7 +13,7 @@ const REGIONS = {
     test:   (x, y) => !(x > 400000 && y < -450000)
   },
   tree: {
-    label: "🌳 Arbre-Monde", tiles: "https://cdn.paldb.cc/image/treemap8/z{z}x{x}y{y}.webp", img: "map-tree.jpg",
+    label: "🌳 Arbre-Monde", disabled: true, tiles: "https://cdn.paldb.cc/image/treemap8/z{z}x{x}y{y}.webp", img: "map-tree.jpg",
     toGame: (x, y) => ({ x: Math.round(y * 0.00074909 + 485.2784), y: Math.round(x * 0.00074853 + 388.8339) }),
     toPix:  (gx, gy) => [2.00281 * gy - 1811.57135, 1.99916 * gx + 255.58671],
     test:   (x, y) => x > 400000 && y < -450000
@@ -42,6 +42,7 @@ let mapInit = false, mapPOI = null, mapActive = {}, mapObj = null, mapLayers = {
 try { mapActive = JSON.parse(localStorage.getItem("pw_map_cats") || "null") || {}; } catch(e){}
 Object.keys(MAP_CATS).forEach(k => { if (!(k in mapActive)) mapActive[k] = true; });
 try { mapRegion = localStorage.getItem("pw_map_region") || "main"; } catch(e){}
+if (!REGIONS[mapRegion] || REGIONS[mapRegion].disabled) mapRegion = "main";
 
 function initMapTab(){
   if (mapInit) return;
@@ -151,8 +152,9 @@ function buildBackdrop(pts){
 
 function buildMapUI(){
   document.getElementById("mapFilters").innerHTML =
-    `<div class="chiprow" id="mapRegions">${Object.entries(REGIONS).map(([k, r]) =>
-        `<button class="chipf reg${mapRegion === k ? " on" : ""}" data-reg="${k}" style="--c:#f3ca63">${r.label}</button>`).join("")}</div>
+    `<div class="chiprow" id="mapRegions">${Object.entries(REGIONS).map(([k, r]) => r.disabled
+        ? `<button class="chipf reg off" disabled title="Fond de carte indisponible pour l'instant">${r.label} <span class="cnt2">bientôt</span></button>`
+        : `<button class="chipf reg${mapRegion === k ? " on" : ""}" data-reg="${k}" style="--c:#f3ca63">${r.label}</button>`).join("")}</div>
      <div class="chiprow" id="mapCats">${Object.entries(MAP_CATS).map(([k, c]) =>
         `<button class="chipf${mapActive[k] ? " on" : ""}" data-cat="${k}" style="--c:${c.color}">${c.icon} ${c.label} <span class="cnt2" data-cnt="${k}">0</span></button>`).join("")}
       <button class="chipf" id="mapAll">Tout afficher</button><button class="chipf" id="mapNone">Tout masquer</button></div>

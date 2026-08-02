@@ -340,3 +340,11 @@ main{animation:fade .6s .35s backwards;}
 .chipf.reg.on{background:rgba(243,202,99,.16); color:var(--accent); border-color:var(--accent);}
 .mapbg{filter:saturate(.85) brightness(.92) contrast(1.05);}
 .leaflet-container{outline:none;}
+
+/* marque Pal-Lab */
+header h1{font-size:clamp(28px,5vw,42px); letter-spacing:-.5px; font-weight:800;}
+.brand{background:linear-gradient(100deg,var(--accent) 0%,#ffe6a3 40%,var(--accent2) 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;}
+.brand-dot{color:var(--accent2); -webkit-text-fill-color:var(--accent2);}
+.chipf.reg.off{opacity:.45; cursor:not-allowed;}
+.chipf.reg.off:hover{border-color:var(--border); color:var(--muted);}
