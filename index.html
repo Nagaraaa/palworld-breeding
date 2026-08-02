@@ -13,15 +13,26 @@
 <canvas id="confetti"></canvas>
 <header>
   <h1>🥚 Palworld — <span>Calculateur de Reproduction</span></h1>
-  <p>Données du jeu v1.0 · 300 pals · combos spéciaux inclus · navigation <kbd>1</kbd>–<kbd>5</kbd></p>
+  <p>Palworld v1.0 · 300 pals · 114 passifs · 1 150 points d'intérêt · élevage, paldex &amp; carte</p>
 </header>
 
 <nav class="tabs">
-  <button class="tab active" data-tab="breed">💞 Croiser</button>
-  <button class="tab" data-tab="parents">🔍 Parents</button>
-  <button class="tab" data-tab="path">🧭 Chemin</button>
-  <button class="tab" data-tab="mine">🎒 Mes Pals<span class="cnt" id="ownedCnt">0</span></button>
-  <button class="tab" data-tab="combos">✨ Combos</button>
+  <div class="navgrp"><span class="navlbl">Élevage</span>
+    <button class="tab active" data-tab="want">🎯 Je veux ce pal</button>
+    <button class="tab" data-tab="breed">💞 Croiser</button>
+    <button class="tab" data-tab="path">🧭 Chemin</button>
+    <button class="tab" data-tab="combos">✨ Combos</button>
+  </div>
+  <div class="navgrp"><span class="navlbl">Pals</span>
+    <button class="tab" data-tab="dex">📖 Paldex</button>
+    <button class="tab" data-tab="passives">🧬 Passifs</button>
+  </div>
+  <div class="navgrp"><span class="navlbl">Monde</span>
+    <button class="tab" data-tab="map">🗺️ Carte</button>
+  </div>
+  <div class="navgrp"><span class="navlbl">Moi</span>
+    <button class="tab" data-tab="mine">🎒 Mes Pals<span class="cnt" id="ownedCnt">0</span></button>
+  </div>
 </nav>
 
 <main>
@@ -38,10 +49,11 @@
     </div>
   </section>
 
-  <section id="tab-parents">
+  <section id="tab-want" class="visible">
     <div class="card">
-      <h2>Trouver les parents</h2>
-      <div class="sub">Choisis l'enfant désiré pour voir toutes les combinaisons de parents possibles.</div>
+      <h2>🎯 Je veux ce pal — toutes les façons de l'obtenir</h2>
+      <div class="sub">Choisis le pal que tu veux obtenir : je te montre <b>toutes les paires de parents</b> qui le donnent,
+      ce que tu peux faire dès maintenant avec ta collection, et le chemin le plus court depuis tes pals.</div>
       <div class="pickers">
         <div class="picker" id="pkChild"></div>
         <div class="picker" id="pkWith"></div>
@@ -109,7 +121,44 @@
       <div id="comboContent"></div>
     </div>
   </section>
+
+  <section id="tab-dex">
+    <div class="card">
+      <h2>📖 Paldex — <span id="dexCount">…</span> pals</h2>
+      <div class="sub">Fiches complètes : éléments, aptitudes de travail, statistiques, rareté, prix. Clique un pal pour tout voir.</div>
+      <div id="dexFilters"></div>
+      <div class="dexgrid" id="dexGrid"></div>
+    </div>
+  </section>
+
+  <section id="tab-passives">
+    <div class="card">
+      <h2>🧬 Compétences passives — <span id="passCount">…</span></h2>
+      <div class="sub">Les 114 passifs que peuvent porter tes pals, classés par rang. Cherche par nom ou par effet
+      (« attaque », « travail », « monture »…).</div>
+      <div id="passFilters"></div>
+      <div class="passgrid" id="passList"></div>
+    </div>
+  </section>
+
+  <section id="tab-map">
+    <div class="card">
+      <h2>🗺️ Carte interactive</h2>
+      <div class="sub">Points de voyage rapide, tours de guet, statues de Pal Ancien, donjons, alphas, prédateurs et reliques.
+      Clique un marqueur pour obtenir ses coordonnées à saisir en jeu.</div>
+      <div id="mapStatus"></div>
+      <div id="mapFilters"></div>
+      <div class="mapwrap"><div id="mapCanvas"></div>
+        <div class="mapinfo"><span id="mapCoords">Survole la carte pour lire les coordonnées</span>
+        · <b id="mapShown">0</b> marqueurs affichés</div>
+      </div>
+      <div class="infobox">💡 Le fond de carte est volontairement schématique (aucune image du jeu n'est redistribuée ici).
+      Pour afficher une vraie carte, dépose une image nommée <code>map.jpg</code> à la racine du site : elle sera utilisée automatiquement.</div>
+    </div>
+  </section>
 </main>
+
+<div id="modal"><div class="modalbox"><div class="modalhead"><b id="modalTitle"></b><button id="modalClose">✕</button></div><div id="modalBody"></div></div></div>
 
 <footer>
   Outil non-officiel · Données extraites des fichiers du jeu Palworld v1.0
@@ -123,6 +172,9 @@
 <script src="data.js"></script>
 <script src="core.js"></script>
 <script src="ui.js"></script>
+<script src="passives.js"></script>
+<script src="paldex.js"></script>
+<script src="map.js"></script>
 <script src="import.js"></script>
 </body>
 </html>

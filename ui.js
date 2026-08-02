@@ -71,7 +71,7 @@ function updateTabsBar(){ tabsBar.classList.toggle("scrolled", scrollY > 30); }
 addEventListener("scroll", updateTabsBar, { passive: true });
 updateTabsBar();
 /* ==================== ONGLETS (View Transitions) ==================== */
-const TABS = ["breed", "parents", "path", "mine", "combos"];
+const TABS = ["want", "breed", "path", "combos", "dex", "passives", "map", "mine"];
 function switchTab(name){
   const doIt = () => {
     document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
@@ -79,6 +79,9 @@ function switchTab(name){
     document.getElementById("tab-" + name).classList.add("visible");
     if (name === "mine") initMineTab();
     if (name === "combos") initComboTab();
+    if (name === "dex") initPaldexTab();
+    if (name === "passives") initPassivesTab();
+    if (name === "map") { initMapTab(); setTimeout(() => { if (typeof mapObj !== "undefined" && mapObj) mapObj.invalidateSize(); }, 300); }
     updateHash();
   };
   if (document.startViewTransition && !reduceMotion && !restoring) document.startViewTransition(doIt);
@@ -88,7 +91,7 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
 addEventListener("keydown", e => {
   if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
   const n = parseInt(e.key);
-  if (n >= 1 && n <= 5) switchTab(TABS[n - 1]);
+  if (n >= 1 && n <= TABS.length) switchTab(TABS[n - 1]);
 });
 
 /* ==================== PERMALIENS ==================== */
@@ -98,7 +101,7 @@ function updateHash(){
   const active = document.querySelector(".tab.active").dataset.tab;
   const segs = [active];
   if (active === "breed"){ segs.push(pkA.get() || "", pkB.get() || ""); }
-  else if (active === "parents"){ segs.push(pkChild.get() || "", pkWith.get() || ""); }
+  else if (active === "want"){ segs.push(pkChild.get() || "", pkWith.get() || ""); }
   else if (active === "path"){ segs.push(pkFrom.get() || "", pkTo.get() || ""); }
   history.replaceState(null, "", "#" + segs.join("/").replace(/\/+$/, ""));
 }
@@ -110,7 +113,7 @@ function restoreHash(){
   restoring = true;
   switchTab(tab);
   if (tab === "breed"){ if (x) pkA.set(x, true); if (y) pkB.set(y, true); updateBreed(); }
-  else if (tab === "parents"){ if (y) pkWith.set(y, true); if (x) pkChild.set(x, true); if (x) updateParents(); }
+  else if (tab === "want"){ if (y) pkWith.set(y, true); if (x) pkChild.set(x, true); if (x) updateParents(); }
   else if (tab === "path"){ if (x) pkFrom.set(x, true); if (y) pkTo.set(y, true); updatePath(); }
   restoring = false;
   updateHash();
@@ -221,6 +224,25 @@ function updateParents(){
     parentsOut.querySelectorAll(".seg [data-view]").forEach(b => b.addEventListener("click", () => {
       parentsView = b.dataset.view; updateParents();
     }));
+    /* chemin le plus court depuis la collection */
+    if (owned.size && !owned.has(t)){
+      const box = document.createElement("div");
+      box.className = "count-info";
+      box.innerHTML = `<button class="togglebtn" id="fromMine">🧭 Chemin le plus court depuis mes pals</button>`;
+      parentsOut.appendChild(box);
+      document.getElementById("fromMine").addEventListener("click", () => {
+        const res = bestPathFromOwned(t);
+        const out = document.createElement("div");
+        out.className = "planbox";
+        if (!res) out.innerHTML = `<h3>Aucun chemin depuis tes pals</h3><div class="count-info">Il te faut d'abord d'autres espèces (capture ou œufs).</div>`;
+        else out.innerHTML = `<h3>Depuis ${PALS[res.from].name} — ${res.steps.length} croisement${res.steps.length > 1 ? "s" : ""}</h3>` +
+          res.steps.map((s, i) => `<div class="planstep"><span class="num">${i + 1}</span>
+            ${icon(s.from, "", 26)}<b>${PALS[s.from].name}</b><span style="color:var(--muted)">✕</span>
+            ${icon(s.partner, "", 26)}<b>${PALS[s.partner].name}</b>${owned.has(s.partner) ? " <span style='color:var(--ok);font-size:10px'>✓</span>" : ""}
+            <span style="color:var(--accent)">➜</span>${icon(s.child, "", 26)}<b style="color:var(--accent)">${PALS[s.child].name}</b></div>`).join("");
+        box.replaceWith(out);
+      });
+    }
     if (parentsView === "owned" && !ownedPairs.length) return;
     countUp(document.getElementById("pairCount"), shown.length);
     const ordered = [...specials, ...restOwned, ...restOther];
@@ -345,6 +367,20 @@ document.getElementById("swapFT").addEventListener("click", function(){
   if (a && b){ pkFrom.set(b, true); pkTo.set(a, true); updatePath(); }
 });
 
+/* meilleur chemin (le plus court) depuis un pal possédé vers une cible */
+function bestPathFromOwned(target){
+  let best = null;
+  for (const from of owned){
+    if (PALS[from].nobreed) continue;
+    const steps = shortestPath(from, target);
+    if (steps && (!best || steps.length < best.steps.length)){
+      best = { from, steps: steps.map(s => ({ from: s.from, child: s.child,
+        partner: [...s.partners].sort((a, b) => (owned.has(b) ? 1 : 0) - (owned.has(a) ? 1 : 0))[0] })) };
+      if (best.steps.length === 1) break;
+    }
+  }
+  return best;
+}
 /* ==================== 4. MES PALS ==================== */
 let mineInit = false, mineDebounce = null;
 function initMineTab(){
@@ -360,7 +396,7 @@ function initMineTab(){
     const id = cell.dataset.id;
     if (owned.has(id)) owned.delete(id); else owned.add(id);
     cell.classList.toggle("owned", owned.has(id));
-    saveOwned(); scheduleMineResults();
+    saveOwned(); scheduleMineResults(); if (typeof renderDex === "function" && paldexInit) renderDex();
   });
   document.getElementById("mineSearch").addEventListener("input", function(){
     const f = norm(this.value);
