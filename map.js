@@ -7,13 +7,13 @@
 /* ---- régions : conversion coordonnées sauvegarde -> coordonnées in-game -> pixels carte ---- */
 const REGIONS = {
   main: {
-    label: "🏝️ Îles Palpagos", tiles: "https://cdn.paldb.cc/image/map8/z{z}x{x}y{y}.webp", img: "map.jpg",
+    label: "🏝️ Îles Palpagos", tiles: "/api/tile?m=main&z={z}&x={x}&y={y}", img: "map.jpg",
     toGame: (x, y) => ({ x: Math.round((y - 158000) / 459), y: Math.round((x + 123888) / 459) }),
     toPix:  (gx, gy) => [0.16221 * gy - 167.25513, 0.16221 * gx + 311.8397],
     test:   (x, y) => !(x > 400000 && y < -450000)
   },
   tree: {
-    label: "🌳 Arbre-Monde", disabled: true, tiles: "https://cdn.paldb.cc/image/treemap8/z{z}x{x}y{y}.webp", img: "map-tree.jpg",
+    label: "🌳 Arbre-Monde", tiles: "/api/tile?m=tree&z={z}&x={x}&y={y}", img: "map-tree.jpg",
     toGame: (x, y) => ({ x: Math.round(y * 0.00074909 + 485.2784), y: Math.round(x * 0.00074853 + 388.8339) }),
     toPix:  (gx, gy) => [2.00281 * gy - 1811.57135, 1.99916 * gx + 255.58671],
     test:   (x, y) => x > 400000 && y < -450000
@@ -207,13 +207,26 @@ function useGenerated(){
   setBgNote(`Fond <b>généré</b> à partir des points d'intérêt — dépose <code>${REGIONS[mapRegion].img}</code> à la racine du site pour un vrai visuel`);
 }
 function useTiles(){
-  let failed = 0, ok = 0;
+  let failed = 0, ok = 0, retried = 0;
+  /* maxNativeZoom réduit : moins de tuiles demandées d'un coup, donc moins de rejets du CDN */
   tileLayer = L.tileLayer(REGIONS[mapRegion].tiles, { minZoom: 1, minNativeZoom: 1, maxZoom: 6, maxNativeZoom: 6,
-    tileSize: 512, noWrap: true, bounds: TILE_BOUNDS, className: "mapbg", keepBuffer: 3 });
+    tileSize: 512, noWrap: true, bounds: TILE_BOUNDS, className: "mapbg", keepBuffer: 2 });
   tileLayer.on("tileload", () => ok++);
-  tileLayer.on("tileerror", () => { if (++failed >= 2 && failed > ok) useGenerated(); });
+  tileLayer.on("tileerror", e => {
+    failed++;
+    const t = e.tile;
+    if (!t) return;
+    const n = +(t.dataset.retry || 0);
+    if (n < 2){                                   /* le CDN rejette par rafales : on réessaie */
+      t.dataset.retry = n + 1; retried++;
+      const base = t.src.split("#")[0];
+      setTimeout(() => { t.src = base + "#r" + (n + 1); }, 400 * (n + 1));
+      return;
+    }
+    if (failed - retried >= 6 && failed > ok) useGenerated();   /* trop d'échecs définitifs */
+  });
   tileLayer.addTo(mapObj);
-  setBgNote(`Fond : tuiles <a href="https://paldb.cc" target="_blank">paldb.cc</a>`);
+  setBgNote(`Fond : cartes du jeu via <a href="https://paldb.cc" target="_blank">paldb.cc</a> (mises en cache sur ce site)`);
 }
 function switchRegion(){
   if (tileLayer){ mapObj.removeLayer(tileLayer); tileLayer = null; }

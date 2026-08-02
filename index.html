@@ -26,6 +26,7 @@
   <div class="navgrp"><span class="navlbl">Pals</span>
     <button class="tab" data-tab="dex">📖 Paldex</button>
     <button class="tab" data-tab="passives">🧬 Passifs</button>
+    <button class="tab" data-tab="meta">🏆 Meta</button>
   </div>
   <div class="navgrp"><span class="navlbl">Monde</span>
     <button class="tab" data-tab="map">🗺️ Carte</button>
@@ -144,6 +145,21 @@
     </div>
   </section>
 
+  <section id="tab-meta">
+    <div class="card">
+      <h2>🏆 Meta — les builds de passifs qui comptent</h2>
+      <div class="sub">Les combinaisons de 4 passifs à viser selon le rôle du pal (un pal en porte 4 maximum).
+      Effets vérifiés sur les données du jeu · méta Palworld 1.0. Clique un passif pour le retrouver dans la liste complète,
+      ou un pal conseillé pour ouvrir sa fiche.</div>
+      <div id="metaFilters"></div>
+      <div id="metaList"></div>
+      <div class="infobox">🧪 Pour obtenir ces passifs : capture de pals sauvages, <b>Yakumo</b> (copie les passifs éligibles),
+      élevage ciblé (garde des parents « propres », 2+2 ou 3+1), <b>Gâteau spécial</b> pour l'héritage multiple,
+      <b>œufs sinistres</b> de l'Arbre-Monde pour les passifs ★5, <b>œufs mutés</b> (Immortel, Anomalie, Baby-sitter,
+      Blindage, Marche Céleste) et la <b>table de chirurgie</b> avec les implants jetables.</div>
+    </div>
+  </section>
+
   <section id="tab-map">
     <div class="card">
       <h2>🗺️ Carte interactive</h2>
@@ -177,6 +193,7 @@
 <script src="ui.js"></script>
 <script src="passives.js"></script>
 <script src="paldex.js"></script>
+<script src="meta.js"></script>
 <script src="map.js"></script>
 <script src="import.js"></script>
 </body>

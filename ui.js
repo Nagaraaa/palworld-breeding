@@ -71,7 +71,7 @@ function updateTabsBar(){ tabsBar.classList.toggle("scrolled", scrollY > 30); }
 addEventListener("scroll", updateTabsBar, { passive: true });
 updateTabsBar();
 /* ==================== ONGLETS (View Transitions) ==================== */
-const TABS = ["want", "breed", "path", "combos", "dex", "passives", "map", "mine"];
+const TABS = ["want", "breed", "path", "combos", "dex", "passives", "meta", "map", "mine"];
 function switchTab(name){
   const doIt = () => {
     document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
@@ -81,6 +81,7 @@ function switchTab(name){
     if (name === "combos") initComboTab();
     if (name === "dex") initPaldexTab();
     if (name === "passives") initPassivesTab();
+    if (name === "meta") initMetaTab();
     if (name === "map") { initMapTab(); setTimeout(() => { if (typeof mapObj !== "undefined" && mapObj) mapObj.invalidateSize(); }, 300); }
     updateHash();
   };

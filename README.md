@@ -11,6 +11,7 @@ Site statique, aucun build : https://palworld-breeding-mocha.vercel.app
 - **Combos** — les 82 combos spéciaux et les pals uniques
 - **Paldex** — 300 pals : éléments, aptitudes de travail, stats, rareté, prix
 - **Passifs** — les 114 compétences passives (FR), filtrables par rang et par effet
+- **Meta** — 15 builds de 4 passifs par rôle (ouvrier, ranch, élevage, combat, tank, montures, soutien joueur) avec les pals conseillés
 - **Carte** — ~1 150 points d'intérêt (voyage rapide, tours, statues, donjons, alphas, prédateurs, reliques) avec coordonnées in-game
 - **Mes Pals** — import de sauvegarde (solo, serveur dédié, API Nitrado), plan d'élevage, export pour la guilde
 
@@ -23,6 +24,7 @@ Site statique, aucun build : https://palworld-breeding-mocha.vercel.app
 | `core.js` | moteur de breeding + Web Worker |
 | `ui.js` | onglets élevage, Mes Pals, combos |
 | `paldex.js` | Paldex et passifs |
+| `meta.js` | builds meta par rôle |
 | `map.js` | carte interactive |
 | `import.js` | parseur de sauvegardes + import Nitrado |
 | `passives.js` | 114 passifs FR |

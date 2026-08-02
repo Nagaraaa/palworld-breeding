@@ -351,3 +351,36 @@ header h1{font-size:clamp(28px,5vw,42px); letter-spacing:-.5px; font-weight:800;
 
 .credit{color:var(--accent2); font-weight:700;}
 footer{padding:24px 20px 32px;}
+
+/* ==================== onglet Meta ==================== */
+#metaList{display:flex; flex-direction:column; gap:14px; margin-top:16px;}
+.metacard{background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:16px 18px;
+  animation:chipIn .35s backwards; transition:border-color .2s;}
+.metacard:hover{border-color:#3d4558;}
+.metahead{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+.metahead .mi{font-size:26px;}
+.mtitre{font-size:16px; font-weight:700;}
+.mtotal{font-size:12.5px; color:var(--accent2); margin-top:2px;}
+.mcat{margin-left:auto; font-size:11px; color:var(--muted); background:var(--card2);
+  border:1px solid var(--border); border-radius:999px; padding:3px 10px;}
+.mpour{font-size:13px; color:var(--muted); margin:10px 0 12px;}
+.mpasses{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:9px;}
+.mpass{background:var(--card2); border:1px solid var(--border); border-left:3px solid var(--muted);
+  border-radius:10px; padding:9px 11px; cursor:pointer; transition:transform .12s, border-color .12s;}
+.mpass:hover{transform:translateY(-2px); border-color:var(--accent);}
+.mpass.ghost{opacity:.6; cursor:default; display:flex; align-items:center;}
+.mpass.rk5,.mpass.rk4{border-left-color:var(--accent);}
+.mpass.rk3,.mpass.rk2{border-left-color:var(--accent2);}
+.mpass.rk1{border-left-color:#6b7280;}
+.mpass b{font-size:13px;}
+.mpass .mrank{float:right; font-size:10px; color:var(--accent); letter-spacing:1px;}
+.mpass ul{list-style:none; margin-top:5px;}
+.mpass li{font-size:11.5px; color:var(--muted); padding-left:9px; position:relative; line-height:1.5;}
+.mpass li::before{content:"·"; position:absolute; left:1px; color:var(--accent2);}
+.mnotes{margin-top:12px; list-style:none; display:flex; flex-direction:column; gap:5px;}
+.mnotes li{font-size:12.5px; color:var(--muted); padding-left:16px; position:relative; line-height:1.55;}
+.mnotes li::before{content:"💡"; position:absolute; left:0; font-size:10px;}
+.metapals{margin-top:12px; padding-top:11px; border-top:1px dashed var(--border);}
+.metalbl{font-size:10.5px; text-transform:uppercase; letter-spacing:1px; color:var(--muted);
+  display:block; margin-bottom:7px;}
+.metapals .mv{color:var(--accent); font-size:11px; margin-left:5px;}
