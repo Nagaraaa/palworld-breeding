@@ -71,7 +71,7 @@ function updateTabsBar(){ tabsBar.classList.toggle("scrolled", scrollY > 30); }
 addEventListener("scroll", updateTabsBar, { passive: true });
 updateTabsBar();
 /* ==================== ONGLETS (View Transitions) ==================== */
-const TABS = ["want", "breed", "path", "combos", "dex", "passives", "meta", "map", "mine"];
+const TABS = ["home", "want", "breed", "path", "combos", "dex", "passives", "meta", "map", "mine"];
 function switchTab(name){
   const doIt = () => {
     document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
@@ -82,6 +82,7 @@ function switchTab(name){
     if (name === "dex") initPaldexTab();
     if (name === "passives") initPassivesTab();
     if (name === "meta") initMetaTab();
+    if (name === "home") setTimeout(runHeroCounters, 150);
     if (name === "map") { initMapTab(); setTimeout(() => { if (typeof mapObj !== "undefined" && mapObj) mapObj.invalidateSize(); }, 300); }
     updateHash();
   };
@@ -89,6 +90,15 @@ function switchTab(name){
   else doIt();
 }
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
+const logo = document.getElementById("logoHome");
+if (logo) logo.addEventListener("click", () => switchTab("home"));
+document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.go)));
+let heroDone = false;
+function runHeroCounters(){
+  if (heroDone) return;
+  heroDone = true;
+  document.querySelectorAll(".hstat b[data-count]").forEach(el => countUp(el, +el.dataset.count));
+}
 addEventListener("keydown", e => {
   if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
   const n = parseInt(e.key);
@@ -520,4 +530,5 @@ function renderCombos(filter){
   document.getElementById("comboContent").innerHTML = html;
 }
 
-
+/* compteurs de la page d'accueil au premier affichage */
+if (document.querySelector("#tab-home.visible")) setTimeout(runHeroCounters, 400);
