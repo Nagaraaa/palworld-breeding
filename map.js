@@ -220,10 +220,13 @@ function buildMapUI(){
     info.textContent = `${Math.round((e.latlng.lng - o[1]) / ux)}, ${Math.round((e.latlng.lat - o[0]) / uy)}`;
   });
   /* les marqueurs restent lisibles : on grossit légèrement avec le zoom */
-  mapObj.on("zoomend", () => {
-    const z = mapObj.getZoom();
-    document.getElementById("mapCanvas").classList.toggle("zoomed", z >= 4);
-  });
+  const sizeByZoom = () => {
+    const z = mapObj.getZoom(), el = document.getElementById("mapCanvas");
+    el.classList.remove("z-s", "z-m", "z-l");
+    el.classList.add(z <= 2 ? "z-s" : z <= 3.5 ? "z-m" : "z-l");
+  };
+  mapObj.on("zoomend", sizeByZoom);
+  setTimeout(sizeByZoom, 100);
 
   document.querySelectorAll("#mapRegions [data-reg]").forEach(b => b.addEventListener("click", () => {
     if (mapRegion === b.dataset.reg) return;
@@ -313,4 +316,40 @@ function applyLayerVisibility(){
   const st = document.getElementById("mapStatus");
   if (st) st.innerHTML = `<div class="count-info"><b>${n.toLocaleString("fr")}</b> points affichés
     sur ${total.toLocaleString("fr")} dans cette région · ${mapPOI.length.toLocaleString("fr")} au total</div>`;
+}
+
+/* ---------- fond de carte : image locale > tuiles du jeu > fond généré ---------- */
+function setBgNote(txt){
+  const el = document.getElementById("mapSource");
+  if (el) el.innerHTML = txt;
+}
+function useTiles(){
+  let failed = 0, ok = 0, retried = 0;
+  tileLayer = L.tileLayer(REGIONS[mapRegion].tiles, { minZoom: 1, minNativeZoom: 1, maxZoom: 7, maxNativeZoom: 4,
+    tileSize: 512, noWrap: true, bounds: TILE_BOUNDS, className: "mapbg", keepBuffer: 2 });
+  tileLayer.on("tileload", () => ok++);
+  tileLayer.on("tileerror", e => {
+    failed++;
+    const t = e.tile;
+    if (!t) return;
+    const n = +(t.dataset.retry || 0);
+    if (n < 2){
+      t.dataset.retry = n + 1; retried++;
+      const base = t.src.split("#")[0];
+      setTimeout(() => { t.src = base + "#r" + (n + 1); }, 400 * (n + 1));
+      return;
+    }
+    if (failed - retried >= 6 && failed > ok) useGenerated();
+  });
+  tileLayer.addTo(mapObj);
+  setBgNote(`carte du jeu via <a href="https://paldb.cc" target="_blank">paldb.cc</a>`);
+}
+function useGenerated(){
+  const pts = mapPOI.filter(p => p.reg === mapRegion).map(p => {
+    const [lat, lng] = REGIONS[mapRegion].toPix(p.mx, p.my); return { lat, lng }; });
+  if (!pts.length) return;
+  const bg = buildBackdrop(pts);
+  if (tileLayer) mapObj.removeLayer(tileLayer);
+  tileLayer = L.imageOverlay(bg.url, bg.bounds, { opacity: .95, className: "mapbg" }).addTo(mapObj);
+  setBgNote(`fond généré (carte du jeu indisponible)`);
 }

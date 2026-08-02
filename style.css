@@ -422,7 +422,11 @@ footer{padding:24px 20px 32px;}
   box-shadow:0 2px 6px rgba(0,0,0,.6);}
 .pmk.emo{display:flex; align-items:center; justify-content:center; font-size:15px; line-height:1;}
 .pmkwrap:hover .pmk{transform:scale(1.45); z-index:400;}
-#mapCanvas.zoomed .pmk{width:30px; height:30px;}
+#mapCanvas.z-s .pmk{width:15px; height:15px;}
+#mapCanvas.z-s .pmk.emo{font-size:11px;}
+#mapCanvas.z-m .pmk{width:21px; height:21px;}
+#mapCanvas.z-l .pmk{width:28px; height:28px;}
+#mapCanvas.z-l .pmk.emo{font-size:17px;}
 .leaflet-marker-icon{will-change:transform;}
 .leaflet-popup-content b{font-size:13.5px;}
 .leaflet-popup-content .poplv{color:var(--accent); font-size:11.5px; font-weight:700;}
