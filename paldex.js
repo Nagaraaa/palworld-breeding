@@ -7,8 +7,8 @@ const PSP_BASE = "https://cdn.jsdelivr.net/gh/oMaN-Rod/palworld-save-pal@main/da
 
 const ELEM_FR = { Normal: "Neutre", Fire: "Feu", Water: "Eau", Electricity: "Foudre",
   Leaf: "Plante", Ice: "Glace", Earth: "Terre", Dark: "Ténèbres", Dragon: "Dragon" };
-const ELEM_COLOR = { Normal: "#6b6558", Fire: "#c04a1b", Water: "#1f6f9e", Electricity: "#997000",
-  Leaf: "#3d7a2e", Ice: "#2b7f8c", Earth: "#8a5a2b", Dark: "#5c4a8f", Dragon: "#a03c68" };
+const ELEM_COLOR = { Normal: "#b9bcae", Fire: "#dd8a54", Water: "#7bb4d6", Electricity: "#d6bd63",
+  Leaf: "#9cc47f", Ice: "#8fcbd2", Earth: "#c4966a", Dark: "#a99ad2", Dragon: "#d18fa6" };
 const WORK_FR = { EmitFlame: "Allumage", Watering: "Arrosage", Seeding: "Plantation",
   GenerateElectricity: "Électricité", Handcraft: "Artisanat", Collection: "Récolte",
   Deforest: "Abattage", Mining: "Extraction", OilExtraction: "Pétrole",
