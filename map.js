@@ -7,13 +7,13 @@
 /* ---- régions : conversion coordonnées sauvegarde -> coordonnées in-game -> pixels carte ---- */
 const REGIONS = {
   main: {
-    label: "🏝️ Îles Palpagos", tiles: "/api/tile?m=main&z={z}&x={x}&y={y}", img: "map.jpg",
+    label: "Îles Palpagos", tiles: "/api/tile?m=main&z={z}&x={x}&y={y}", img: "map.jpg",
     toGame: (x, y) => ({ x: Math.round((y - 158000) / 459), y: Math.round((x + 123888) / 459) }),
     toPix:  (gx, gy) => [0.16221 * gy - 167.25513, 0.16221 * gx + 311.8397],
     test:   (x, y) => !(x > 400000 && y < -450000)
   },
   tree: {
-    label: "🌳 Arbre-Monde", tiles: "/api/tile?m=tree&z={z}&x={x}&y={y}", img: "map-tree.jpg",
+    label: "Arbre-Monde", tiles: "/api/tile?m=tree&z={z}&x={x}&y={y}", img: "map-tree.jpg",
     toGame: (x, y) => ({ x: Math.round(y * 0.00074909 + 485.2784), y: Math.round(x * 0.00074853 + 388.8339) }),
     toPix:  (gx, gy) => [2.00281 * gy - 1811.57135, 1.99916 * gx + 255.58671],
     test:   (x, y) => x > 400000 && y < -450000
@@ -60,7 +60,7 @@ function initMapTab(){
   if (mapInit) return;
   mapInit = true;
   const status = document.getElementById("mapStatus");
-  status.innerHTML = `<div class="count-info">🗺️ Chargement de la carte et des points d'intérêt…</div>`;
+  status.innerHTML = `<div class="count-info">Chargement de la carte et des points d'intérêt…</div>`;
   Promise.all([loadLeaflet(), loadPOI()]).then(([, poi]) => { mapPOI = poi; buildMapUI(); })
     .catch(err => { status.innerHTML = `<div class="warnbox">Impossible de charger la carte : ${err.message}</div>`; });
 }
@@ -204,7 +204,7 @@ function buildMapUI(){
         ${Object.entries(REGIONS).map(([k, r]) =>
           `<button class="regbtn${mapRegion === k ? " on" : ""}" data-reg="${k}">${r.label}</button>`).join("")}
       </div>
-      <input type="text" class="mapsearch" id="mapSearch" placeholder="🔍 Rechercher un lieu, un alpha, une relique…">
+      <input type="text" class="mapsearch" id="mapSearch" placeholder="Rechercher un lieu, un alpha, une relique…">
     </div>
     <div class="legend">
       <div class="legend-head">

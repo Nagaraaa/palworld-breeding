@@ -255,8 +255,8 @@ function wireImport(){
       res.pals.forEach(p => (owners[p.owner] || (owners[p.owner] = [])).push(p));
       const okeys = Object.keys(owners);
       const olabel = uid => res.playerNames[uid] ||
-        (uid === "base" ? "🏕 Bases / boîte de guilde" :
-         uid === "wild" ? "🌲 Sans propriétaire ni conteneur (sauvages ?)" :
+        (uid === "base" ? "Bases / boîte de guilde" :
+         uid === "wild" ? "Sans propriétaire ni conteneur (sauvages ?)" :
          uid === "aucun" ? "Sans propriétaire" : "Joueur " + uid.slice(0, 8) + "…");
       const applyImport = (palsSel, who) => {
         collection = {};
@@ -276,14 +276,14 @@ function wireImport(){
         const rows = species.map(id => ({ id, ...collection[id] })).sort((a, b) => b.n - a.n || b.l - a.l);
         let html = "";
         if (/localdata/i.test(file.name)) html += `<div class="infobox">ℹ️ <b>LocalData.sav</b> ne contient que ton équipe actuelle (cache local). Pour toute ta boîte, importe le <b>Level.sav</b> du serveur.</div>`;
-        html += `<div class="infobox">✅ <b>${palsSel.length}</b> pals importés${who ? ` pour <b>${who}</b>` : ""} · <b>${species.length}</b> espèces différentes
-          ${totalStars ? " · " + totalStars + " avec étoiles ★" : ""}${totalLucky ? " · " + totalLucky + " lucky/alpha ✨" : ""}
+        html += `<div class="infobox">${ico("check",16)} <b>${palsSel.length}</b> pals importés${who ? ` pour <b>${who}</b>` : ""} · <b>${species.length}</b> espèces différentes
+          ${totalStars ? " · " + totalStars + " avec étoiles" : ""}${totalLucky ? " · " + totalLucky + " lucky ou alpha" : ""}
           — cochés automatiquement ci-dessous.</div>
-          <div class="toolrow"><button class="togglebtn expguild">💾 Exporter pour la guilde (fichier à partager sur Discord)</button></div>`;
+          <div class="toolrow"><button class="togglebtn expguild">${ico("save",15)} Exporter pour la guilde (fichier à partager sur Discord)</button></div>`;
         html += `<table class="imptable"><tr><th>Pal</th><th>Nombre</th><th>★ max</th><th>Nv. max</th><th>Lucky</th></tr>`;
         html += rows.map(r => `<tr><td>${icon(r.id)}${PALS[r.id].name}</td><td>×${r.n}</td>
           <td>${r.s ? "<span class='star'>" + "★".repeat(r.s) + "</span>" : "—"}</td>
-          <td>${r.l}</td><td>${r.lucky ? "✨×" + r.lucky : "—"}</td></tr>`).join("");
+          <td>${r.l}</td><td>${r.lucky ? "×" + r.lucky : "—"}</td></tr>`).join("");
         html += `</table>`;
         const unk = Object.keys(res.unknown);
         if (unk.length) html += `<div class="warnbox" style="margin-top:10px">Espèces non reconnues (ignorées) : ${unk.slice(0, 15).join(", ")}</div>`;
@@ -293,24 +293,24 @@ function wireImport(){
       if (okeys.length > 1){
         /* plusieurs joueurs/guildes : sélection multiple */
         const sel = new Set();
-        let html = `<div class="count-info">🔎 ${res.pals.length.toLocaleString("fr")} pals lus dans la sauvegarde${Object.keys(res.unknown).length ? " · " + Object.keys(res.unknown).length + " espèces non reconnues" : ""} — rien n'est filtré, tout est ci-dessous.</div>
-          <div class="infobox">👥 <b>${okeys.length}</b> groupes détectés sur le serveur.
+        let html = `<div class="count-info">${ico("search",15)} ${res.pals.length.toLocaleString("fr")} pals lus dans la sauvegarde${Object.keys(res.unknown).length ? " · " + Object.keys(res.unknown).length + " espèces non reconnues" : ""} — rien n'est filtré, tout est ci-dessous.</div>
+          <div class="infobox">${ico("users",16)} <b>${okeys.length}</b> groupes détectés sur le serveur.
           Coche les membres de <b>ta guilde</b> (ou juste toi), puis importe la sélection :</div>
           <div class="toolrow" id="ownerPick">`;
         okeys.sort((a, b) => owners[b].length - owners[a].length).forEach(uid => {
           const sp = new Set(owners[uid].map(p => p.id)).size;
-          html += `<button class="togglebtn" data-owner="${uid}">🎮 ${olabel(uid)} — ${owners[uid].length} pals (${sp} espèces)</button>`;
+          html += `<button class="togglebtn" data-owner="${uid}">${olabel(uid)} — ${owners[uid].length} pals (${sp} espèces)</button>`;
         });
         html += `</div><div class="toolrow">
-          <button class="togglebtn" id="impSel" disabled>✅ Importer la sélection</button>
-          <button class="togglebtn" id="impAll">🌍 Tout le serveur — ${res.pals.length} pals</button>
-          <button class="togglebtn expguild">💾 Exporter pour la guilde</button></div>`;
+          <button class="togglebtn" id="impSel" disabled>Importer la sélection</button>
+          <button class="togglebtn" id="impAll">Tout le serveur — ${res.pals.length} pals</button>
+          <button class="togglebtn expguild">${ico("save",15)} Exporter pour la guilde</button></div>`;
         out.innerHTML = html;
         const impSel = document.getElementById("impSel");
         const refresh = () => {
           const n = [...sel].reduce((s, u) => s + owners[u].length, 0);
           impSel.disabled = !sel.size;
-          impSel.textContent = sel.size ? `✅ Importer la sélection — ${sel.size} joueur${sel.size > 1 ? "s" : ""}, ${n} pals` : "✅ Importer la sélection";
+          impSel.textContent = sel.size ? `Importer la sélection — ${sel.size} joueur${sel.size > 1 ? "s" : ""}, ${n} pals` : "Importer la sélection";
         };
         out.querySelectorAll("#ownerPick [data-owner]").forEach(btn => btn.addEventListener("click", () => {
           const uid = btn.dataset.owner;
@@ -404,7 +404,7 @@ async function nitDownload(sid, savPath, token){
     const { done, value } = await reader.read();
     if (done) break;
     chunks.push(value); got += value.length;
-    nitSay(`<div class="count-info">⬇️ Téléchargement du Level.sav… ${total ? Math.round(got / total * 100) + " %" : Math.round(got / 1048576) + " Mo"}</div>`);
+    nitSay(`<div class="count-info">${ico("download",15)} Téléchargement du Level.sav… ${total ? Math.round(got / total * 100) + " %" : Math.round(got / 1048576) + " Mo"}</div>`);
   }
   return new File([new Blob(chunks)], "Level.sav");
 }
@@ -426,7 +426,7 @@ function wireNitrado(){
     if (!t){ nitSay(`<div class="warnbox">Renseigne d'abord ton token.</div>`); return; }
     const url = location.origin + location.pathname + "#setup=" + encodeURIComponent(t);
     navigator.clipboard.writeText(url).then(
-      () => nitSay(`<div class="infobox">🔗 Lien copié ! Envoie-le à ta guilde : en l'ouvrant, le token se configure tout seul et il leur suffit de cliquer « Récupérer ma boîte ».</div>`),
+      () => nitSay(`<div class="infobox">${ico("check",16)} Lien copié ! Envoie-le à ta guilde : en l'ouvrant, le token se configure tout seul et il leur suffit de cliquer « Récupérer ma boîte ».</div>`),
       () => nitSay(`<div class="infobox">Copie ce lien manuellement :<br><code style="word-break:break-all">${url}</code></div>`));
   });
   fg.addEventListener("click", () => {
@@ -436,9 +436,9 @@ function wireNitrado(){
   go.addEventListener("click", () => nitRun());
   async function nitRun(forcedSid){
     if (location.protocol === "file:"){
-      nitSay(`<div class="warnbox">⚠️ L'import Nitrado ne fonctionne pas quand la page est ouverte en double-clic
+      nitSay(`<div class="warnbox">${ico("alert",16)} L'import Nitrado ne fonctionne pas quand la page est ouverte en double-clic
         (le navigateur envoie une origine « null » que l'API Nitrado refuse).<br>
-        👉 Mets le site en ligne (Vercel, Netlify, GitHub Pages…) et ça marchera — ou en attendant,
+        Mets le site en ligne (Vercel, Netlify, GitHub Pages…) et ça marchera — ou en attendant,
         télécharge le Level.sav via le FTP Nitrado et dépose-le dans la zone d'import ci-dessus.</div>`);
       return;
     }
@@ -446,7 +446,7 @@ function wireNitrado(){
     if (!token){ nitSay(`<div class="warnbox">Colle d'abord ton token API Nitrado.</div>`); return; }
     localStorage.setItem("pw_nit_token", token);
     try {
-      nitSay(`<div class="count-info">🔎 Connexion à l'API Nitrado…</div>`);
+      nitSay(`<div class="count-info">${ico("globe",15)} Connexion à l'API Nitrado…</div>`);
       let sid = forcedSid || localStorage.getItem("pw_nit_service");
       let user = null;
       if (!sid){
@@ -454,7 +454,7 @@ function wireNitrado(){
         if (!found.length) throw new Error("Aucun serveur Palworld trouvé parmi tes " + total + " service(s). Vérifie les droits du token.");
         if (found.length > 1){
           nitSay(`<div class="count-info">Plusieurs serveurs trouvés :</div><div class="toolrow">` +
-            found.map(f => `<button class="togglebtn" data-sid="${f.id}" data-user="${f.user || ""}">🎮 ${f.name}</button>`).join("") + `</div>`);
+            found.map(f => `<button class="togglebtn" data-sid="${f.id}" data-user="${f.user || ""}">${f.name}</button>`).join("") + `</div>`);
           document.querySelectorAll("#nitStatus [data-sid]").forEach(b => b.addEventListener("click", () => {
             localStorage.setItem("pw_nit_service", b.dataset.sid); nitRun(b.dataset.sid);
           }));
@@ -466,12 +466,12 @@ function wireNitrado(){
       if (!user){
         try { user = ((await nitApi("/services/" + sid + "/gameservers", token)).gameserver || {}).username; } catch(e){}
       }
-      nitSay(`<div class="count-info">🗂 Recherche du Level.sav…</div>`);
+      nitSay(`<div class="count-info">${ico("search",15)} Recherche du Level.sav…</div>`);
       const savPath = await nitFindSave(sid, user, token);
       localStorage.setItem("pw_nit_path", savPath);
       const file = await nitDownload(sid, savPath, token);
       if (!file) return; /* fallback CORS affiché */
-      nitSay(`<div class="count-info">✅ Level.sav récupéré (${(file.size / 1048576).toFixed(1)} Mo) — analyse…</div>`);
+      nitSay(`<div class="count-info">${ico("check",15)} Level.sav récupéré (${(file.size / 1048576).toFixed(1)} Mo) — analyse…</div>`);
       await window.__doImport(file);
       nitSay("");
     } catch (err){

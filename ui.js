@@ -30,7 +30,7 @@ function makePicker(containerId, labelText, onChange, opts = {}){
     }
     selIndex = shown.length ? 0 : -1;
     list.innerHTML = shown.slice(0, 400).map((id, i) =>
-      `<div class="opt${i===0?' sel':''}" data-id="${id}">${icon(id)}<span>${PALS[id].name}</span><span class="pw">⚡${PALS[id].p}</span><span class="no">${palNo(id)}</span></div>`
+      `<div class="opt${i===0?' sel':''}" data-id="${id}">${icon(id)}<span>${PALS[id].name}</span><span class="pw mono">${PALS[id].p}</span><span class="no">${palNo(id)}</span></div>`
     ).join("") || `<div class="opt" style="color:var(--muted)">Aucun résultat</div>`;
   }
   function open(){ dd.classList.add("open"); inp.value = ""; render(""); setTimeout(() => inp.focus(), 10); }
@@ -144,8 +144,8 @@ const breedOut = document.getElementById("breedResult");
 function childCard(r, reuse){
   const p = PALS[r.child];
   const tags = [];
-  if (r.special && !r.note) tags.push(`<span class="tag gold">✨ Combo spécial</span>`);
-  if (r.note) tags.push(`<span class="tag gold">✨ ${r.note}</span>`);
+  if (r.special && !r.note) tags.push(`<span class="tag gold">Combo spécial</span>`);
+  if (r.note) tags.push(`<span class="tag gold">${r.note}</span>`);
   if (r.self) tags.push(`<span class="tag">Même espèce : l'enfant est toujours un ${p.name}</span>`);
   if (owned.has(r.child)) tags.push(`<span class="tag" style="color:var(--ok)">déjà dans tes pals</span>`);
   return `<div class="child-card">
@@ -179,7 +179,7 @@ function updateBreed(){
     }
   };
   if (reduceMotion){ showResult(); return; }
-  breedOut.innerHTML = `<div class="hatch"><span class="egg">🥚</span></div>`;
+  breedOut.innerHTML = `<div class="hatch"><span class="egg">${ico("egg",46)}</span></div>`;
   hatchTimer = setTimeout(showResult, 650);
 }
 const pkA = makePicker("pkA", "Parent A", updateBreed, { ids: PARENTS });
@@ -228,7 +228,7 @@ function updateParents(){
         Coche tes pals (ou importe ta sauvegarde) dans l'onglet <b>Mes Pals</b>, ou repasse sur « Tous les combos ».</div>`;
     } else {
       html += `<div class="count-info"><b><span id="pairCount">0</span></b> combinaison(s) pour obtenir <b style="color:var(--accent)">${PALS[t].name}</b>${w ? ` avec <b>${PALS[w].name}</b>` : ""}${parentsView === "owned" ? ` <span style="color:var(--ok)">réalisables avec tes pals</span>` : ""}${parentsView === "all" && ownedPairs.length ? ` — les <b style="color:var(--ok)">${ownedPairs.length}</b> réalisables avec tes pals sont en tête` : ""} :</div>`;
-      if (selfPair) html += `<div class="infobox">💡 2 × <b>${PALS[t].name}</b> donnent toujours un <b>${PALS[t].name}</b>.</div>`;
+      if (selfPair) html += `<div class="infobox">${ico("bulb",16)} 2 × <b>${PALS[t].name}</b> donnent toujours un <b>${PALS[t].name}</b>.</div>`;
       html += `<div class="pairgrid" id="pairGrid"></div><div id="pairSentinel"></div>`;
     }
     parentsOut.innerHTML = html;
@@ -239,7 +239,7 @@ function updateParents(){
     if (owned.size && !owned.has(t)){
       const box = document.createElement("div");
       box.className = "count-info";
-      box.innerHTML = `<button class="togglebtn" id="fromMine">🧭 Chemin le plus court depuis mes pals</button>`;
+      box.innerHTML = `<button class="togglebtn" id="fromMine">${ico("compass",15)} Chemin le plus court depuis mes pals</button>`;
       parentsOut.appendChild(box);
       document.getElementById("fromMine").addEventListener("click", () => {
         const res = bestPathFromOwned(t);
@@ -282,11 +282,18 @@ function pairChip(p, i){
     ${icon(a)}<span class="nm">${PALS[a].name}</span>
     <span class="x">✕</span>
     ${icon(b)}<span class="nm">${PALS[b].name}</span>
-    ${note ? `<span class="badge">${note}</span>` : (spec ? `<span class="badge">✨ spécial</span>` : (both ? `<span class="badge green">✓ possédés</span>` : ""))}
+    ${note ? `<span class="badge">${note}</span>` : (spec ? `<span class="badge">spécial</span>` : (both ? `<span class="badge green">✓ possédés</span>` : ""))}
   </div>`;
 }
 const pkChild = makePicker("pkChild", "Enfant désiré", updateParents);
 const pkWith = makePicker("pkWith", "Avec ce parent (optionnel)", () => updateParents(), { ids: PARENTS, placeholder: "Tous les parents" });
+
+/* recherche de l'accueil : renvoie directement vers "Je veux ce pal" */
+const pkHome = makePicker("pkHome", "", id => {
+  if (!id) return;
+  pkChild.set(id);
+  switchTab("want");
+}, { placeholder: "Rechercher un pal…" });
 
 /* ==================== 3. CHEMIN LE PLUS COURT ==================== */
 const pathOut = document.getElementById("pathResult");
@@ -334,7 +341,7 @@ function updatePath(){
   pathOut.innerHTML = `<div class="skl"></div>`;
   setTimeout(() => {
     if (pkFrom.get() !== f || pkTo.get() !== t) return;
-    if (f === t){ pathOut.innerHTML = `<div class="infobox">C'est déjà le même pal 😄</div>`; return; }
+    if (f === t){ pathOut.innerHTML = `<div class="infobox">C'est le même pal des deux côtés</div>`; return; }
     const steps = shortestPath(f, t);
     if (!steps){
       pathOut.innerHTML = `<div class="warnbox"><b>${PALS[t].name}</b> ne peut pas être obtenu par croisement depuis <b>${PALS[f].name}</b>. Ce pal ne s'obtient qu'en le capturant, via son œuf, ou en croisant 2 parents de la même espèce.</div>`;
@@ -450,7 +457,7 @@ function computeMineResults(){
     const gens = Object.keys(byGen).map(Number).sort((a, b) => a - b);
     const totalNew = gens.reduce((s, g) => s + byGen[g].length, 0);
     if (!totalNew){ out.innerHTML = `<div class="infobox" style="margin-top:18px">Aucun nouveau pal accessible avec cette sélection.</div>`; return; }
-    let html = `<div class="count-info" style="margin-top:20px">🎯 <b>${totalNew}</b> nouveau${totalNew > 1 ? "x" : ""} pal${totalNew > 1 ? "s" : ""} accessible${totalNew > 1 ? "s" : ""} par élevage — clique pour voir le plan :</div>`;
+    let html = `<div class="count-info" style="margin-top:20px">${ico("target",16)} <b>${totalNew}</b> nouveau${totalNew > 1 ? "x" : ""} pal${totalNew > 1 ? "s" : ""} accessible${totalNew > 1 ? "s" : ""} par élevage — clique pour voir le plan :</div>`;
     html += `<div id="planTarget"></div>`;
     for (const g of gens){
       html += `<div class="genheader">Génération ${g} — ${byGen[g].length} pal${byGen[g].length > 1 ? "s" : ""} ${g === 1 ? "(croisement direct)" : `(${g} croisements)`}</div><div>`;
@@ -513,14 +520,14 @@ function renderCombos(filter){
   const match = o => !filter || fuzzyScore(filter, PALS[o.a].name) >= 0 || fuzzyScore(filter, PALS[o.b].name) >= 0 || fuzzyScore(filter, PALS[o.c].name) >= 0;
   const fSpec = specials.filter(match);
   const fUni = uniques.filter(id => !filter || fuzzyScore(filter, PALS[id].name) >= 0);
-  let html = `<div class="genheader">✨ ${fSpec.length} combos spéciaux</div><div class="combolist">`;
+  let html = `<div class="genheader">${ico("spark",16)} ${fSpec.length} combos spéciaux</div><div class="combolist">`;
   html += fSpec.map((s, i) => `<div class="pairchip special" ${reduceMotion ? "" : `style="animation-delay:${Math.min(i * 15, 350)}ms"`}>
     ${icon(s.a)}<span class="nm">${PALS[s.a].name}</span><span class="x">✕</span>
     ${icon(s.b)}<span class="nm">${PALS[s.b].name}</span><span class="x">➜</span>
     ${icon(s.c)}<span class="nm" style="color:var(--accent)">${PALS[s.c].name}</span>
     ${s.gender ? `<span class="badge">selon genre</span>` : ""}
   </div>`).join("");
-  html += `</div><div class="genheader" style="margin-top:24px">🔒 ${fUni.length} pals uniques (seulement 2 parents identiques)</div><div class="combolist">`;
+  html += `</div><div class="genheader" style="margin-top:24px">${ico("lock",16)} ${fUni.length} pals uniques (seulement 2 parents identiques)</div><div class="combolist">`;
   html += fUni.map(id => `<div class="pairchip">
     ${icon(id)}<span class="nm">${PALS[id].name}</span><span class="x">✕</span>
     ${icon(id)}<span class="nm">${PALS[id].name}</span><span class="x">➜</span>

@@ -3,29 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect width='48' height='48' fill='%2307090a'/><path d='M19 6h10v3h-2v11.5l9.8 17c2.1 3.6-.5 8.2-4.7 8.2H15.9c-4.2 0-6.8-4.6-4.7-8.2l9.8-17V9h-2V6z' fill='none' stroke='%233ef0a4' stroke-width='2.6' stroke-linejoin='round'/><path d='M15.6 29h16.8l3.2 5.6c1.6 2.8-.4 6.2-3.6 6.2H16c-3.2 0-5.2-3.4-3.6-6.2L15.6 29z' fill='%233ef0a4'/></svg>">
 <meta name="description" content="Calculateur de reproduction Palworld v1.0 : croisements, parents, chemins, import de sauvegarde (solo & serveur dédié Nitrado), plan d'élevage de guilde.">
 <title>Pal-Lab, Élevage, Paldex &amp; Carte Palworld</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="bgfx"><span></span><span></span><span></span><span></span></div>
 <canvas id="confetti"></canvas>
 <header>
-  <button class="logo" id="logoHome" title="Accueil">
-    <span class="logo-mark">
-      <svg viewBox="0 0 48 48" aria-hidden="true">
-        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#f3ca63"/><stop offset="55%" stop-color="#ffe6a3"/><stop offset="100%" stop-color="#5eead4"/>
-        </linearGradient></defs>
-        <path d="M19 4h10v3h-2v11.5l9.8 17c2.1 3.6-.5 8.2-4.7 8.2H15.9c-4.2 0-6.8-4.6-4.7-8.2l9.8-17V7h-2V4z" fill="none" stroke="url(#lg)" stroke-width="2.4" stroke-linejoin="round"/>
-        <path d="M15.6 28h16.8l3.4 6c1.6 2.8-.4 6.2-3.6 6.2H15.8c-3.2 0-5.2-3.4-3.6-6.2l3.4-6z" fill="url(#lg)" opacity=".8"/>
-        <circle cx="20" cy="34" r="2" fill="#0f1420" opacity=".65"/><circle cx="27" cy="36.5" r="1.4" fill="#0f1420" opacity=".55"/>
-      </svg>
-    </span>
-    <span class="logo-txt">Pal<span class="logo-dash">·</span>Lab</span>
-  </button>
-  <p class="baseline">Le labo d'élevage de ta guilde <span class="bsep">·</span> Palworld 1.0</p>
+  <div class="hbar">
+    <button class="logo" id="logoHome" title="Accueil">
+      <span class="logo-mark">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <path d="M19 4h10v3h-2v11.5l9.8 17c2.1 3.6-.5 8.2-4.7 8.2H15.9c-4.2 0-6.8-4.6-4.7-8.2l9.8-17V7h-2V4z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+          <path d="M15.6 28h16.8l3.4 6c1.6 2.8-.4 6.2-3.6 6.2H15.8c-3.2 0-5.2-3.4-3.6-6.2l3.4-6z" fill="currentColor" opacity=".85"/>
+          <circle cx="20" cy="34" r="2" fill="#05070a" opacity=".7"/><circle cx="27" cy="36.5" r="1.4" fill="#05070a" opacity=".6"/>
+        </svg>
+      </span>
+      <span class="logo-txt">PAL<span class="logo-dash">/</span>LAB</span>
+    </button>
+    <div class="hstatus">
+      <span class="dot-live"></span>
+      <span class="mono">PALWORLD 1.0</span><i></i>
+      <span class="mono">300 PALS</span><i></i>
+      <span class="mono">44 552 CROISEMENTS</span><i></i>
+      <span class="mono">1 102 POI</span>
+    </div>
+  </div>
 </header>
 
 <nav class="tabs">
@@ -53,61 +61,39 @@
 
 <main>
   <section id="tab-home" class="visible">
-    <div class="hero">
-      <div class="hero-glow"></div>
-      <h2 class="hero-title">Élève mieux.<br><span>Cherche moins.</span></h2>
-      <p class="hero-sub">Tous les croisements du jeu, ton Paldex, les builds meta et la carte. Au même endroit, en français, et connecté à <b>ta</b> sauvegarde.</p>
-      <div class="hero-cta">
-        <button class="btn-primary" data-go="want" data-ico="target" data-ico-size="17"><span class="tlbl">Je veux ce pal</span></button>
-        <button class="btn-ghost" data-go="mine" data-ico="save"><span>Importer ma sauvegarde</span></button>
+    <div class="console">
+      <div class="console-grid"></div>
+      <span class="console-tag mono">STATION D'ÉLEVAGE</span>
+      <h2 class="console-q">Quel pal veux&#8209;tu obtenir&nbsp;?</h2>
+      <div class="console-search">
+        <div class="picker" id="pkHome"></div>
       </div>
-      <div class="hero-stats">
-        <div class="hstat"><b data-count="300">0</b><span>pals</span></div>
-        <div class="hstat"><b data-count="44552">0</b><span>croisements</span></div>
-        <div class="hstat"><b data-count="114">0</b><span>passifs</span></div>
-        <div class="hstat"><b data-count="1079">0</b><span>points d'intérêt</span></div>
-      </div>
+      <div class="console-hint mono">Ou choisis un module ci&#8209;dessous</div>
     </div>
 
-    <div class="feat-grid">
-      <button class="feat" data-go="want" style="--fc:#f3ca63">
-        <span class="feat-ico" data-ico="target" data-ico-size="26"></span>
-        <b>Je veux ce pal</b>
-        <span>Toutes les paires de parents pour l'obtenir, triées selon ce que tu possèdes déjà.</span>
-      </button>
-      <button class="feat" data-go="breed" style="--fc:#f472b6">
-        <span class="feat-ico" data-ico="breed" data-ico-size="26"></span>
-        <b>Croiser deux pals</b>
-        <span>L'enfant exact, combos spéciaux et couple selon le genre inclus.</span>
-      </button>
-      <button class="feat" data-go="path" style="--fc:#5eead4">
-        <span class="feat-ico" data-ico="path" data-ico-size="26"></span>
-        <b>Chemin le plus court</b>
-        <span>Le nombre minimal de croisements entre deux espèces, étape par étape.</span>
-      </button>
-      <button class="feat" data-go="dex" style="--fc:#38bdf8">
-        <span class="feat-ico" data-ico="book" data-ico-size="26"></span>
-        <b>Paldex complet</b>
-        <span>Éléments, aptitudes, statistiques. Trie par « Allumage 8 » et trouve ton ouvrier idéal.</span>
-      </button>
-      <button class="feat" data-go="meta" style="--fc:#a78bfa">
-        <span class="feat-ico" data-ico="trophy" data-ico-size="26"></span>
-        <b>Builds meta</b>
-        <span>Les 4 passifs à viser par rôle : ouvrier, monture, combat, ranch, élevage.</span>
-      </button>
-      <button class="feat" data-go="map" style="--fc:#4ade80">
-        <span class="feat-ico" data-ico="map" data-ico-size="26"></span>
-        <b>Carte interactive</b>
-        <span>Voyage rapide, donjons, alphas et reliques sur les deux cartes du jeu.</span>
-      </button>
+    <div class="mods">
+      <button class="mod" data-go="want"><span class="mod-n mono">01</span><span class="mod-i" data-ico="target" data-ico-size="22"></span>
+        <b>Obtenir un pal</b><span>Toutes les paires de parents, triées selon ta collection.</span></button>
+      <button class="mod" data-go="breed"><span class="mod-n mono">02</span><span class="mod-i" data-ico="breed" data-ico-size="22"></span>
+        <b>Croiser deux pals</b><span>L'enfant exact, combos spéciaux inclus.</span></button>
+      <button class="mod" data-go="path"><span class="mod-n mono">03</span><span class="mod-i" data-ico="path" data-ico-size="22"></span>
+        <b>Chemin le plus court</b><span>Le minimum de croisements entre deux espèces.</span></button>
+      <button class="mod" data-go="dex"><span class="mod-n mono">04</span><span class="mod-i" data-ico="book" data-ico-size="22"></span>
+        <b>Paldex</b><span>Éléments, aptitudes, statistiques, tri par niveau de travail.</span></button>
+      <button class="mod" data-go="meta"><span class="mod-n mono">05</span><span class="mod-i" data-ico="trophy" data-ico-size="22"></span>
+        <b>Builds meta</b><span>Les 4 passifs à viser selon le rôle du pal.</span></button>
+      <button class="mod" data-go="map"><span class="mod-n mono">06</span><span class="mod-i" data-ico="map" data-ico-size="22"></span>
+        <b>Carte</b><span>Voyage rapide, donjons, alphas, statues.</span></button>
+      <button class="mod" data-go="passives"><span class="mod-n mono">07</span><span class="mod-i" data-ico="dna" data-ico-size="22"></span>
+        <b>Passifs</b><span>Les 114 compétences classées par rang.</span></button>
+      <button class="mod" data-go="mine"><span class="mod-n mono">08</span><span class="mod-i" data-ico="save" data-ico-size="22"></span>
+        <b>Ma collection</b><span>Import de sauvegarde, solo ou serveur dédié.</span></button>
     </div>
 
-    <div class="hero-guild">
-      <div>
-        <b><span data-ico="users" data-ico-size="18"></span> Pensé pour une guilde</b>
-        <p>Importe le <code>Level.sav</code> de ton serveur (ou branche l'API Nitrado), choisis les membres de ta guilde et Pal-Lab calcule ce que <b>vous</b> pouvez élever ensemble, avec le plan étape par étape.</p>
-      </div>
-      <button class="btn-ghost" data-go="mine"><span>Configurer ma collection</span><span data-ico="arrow" data-ico-size="16"></span></button>
+    <div class="guildbar">
+      <span class="mono gb-tag">GUILDE</span>
+      <p>Importe le <code>Level.sav</code> du serveur, sélectionne les membres, et Pal-Lab calcule ce que vous pouvez élever ensemble.</p>
+      <button class="btn-ghost" data-go="mine"><span>Configurer</span></button>
     </div>
   </section>
 
@@ -157,23 +143,23 @@
       <div class="sub">Coche les pals que tu possèdes (sauvegardé automatiquement dans ton navigateur). Je calcule tout ce que tu peux obtenir en les croisant, génération par génération, clique sur un résultat pour voir le plan d'élevage exact.</div>
       <div class="toolrow">
         <input type="text" class="searchbar" id="mineSearch" placeholder="Rechercher un pal à cocher…" style="flex:1; margin-top:0;">
-        <button class="togglebtn" id="clearOwned">🗑 Décocher tout</button>
-        <button class="togglebtn" id="resetAll" title="Efface pals cochés, import, token et chemins mémorisés">♻️ Tout réinitialiser</button>
+        <button class="togglebtn" id="clearOwned" data-ico="trash" data-ico-size="15">Décocher tout</button>
+        <button class="togglebtn" id="resetAll" data-ico="refresh" data-ico-size="15" title="Efface pals cochés, import, token et chemins mémorisés">Tout réinitialiser</button>
       </div>
       <div class="dropzone" id="dropzone">
-        📂 <b>Importer</b>, dépose <code>Level.sav</code>, <code>LocalData.sav</code> ou un export <code>guilde-palworld.json</code> ici, ou clique<br>
+        <span data-ico="folder" data-ico-size="16"></span> <b>Importer</b>, dépose <code>Level.sav</code>, <code>LocalData.sav</code> ou un export <code>guilde-palworld.json</code> ici, ou clique<br>
         <span style="font-size:11.5px">Solo Steam : <code>%LOCALAPPDATA%\\Pal\\Saved\\SaveGames\\&lt;ID&gt;\\&lt;monde&gt;\\Level.sav</code> ·
         Serveur dédié : récupère <code>Pal/Saved/SaveGames/0/&lt;monde&gt;/Level.sav</code> sur le serveur (FTP/panel) —
         le <code>LocalData.sav</code> local ne contient que ton équipe de 5.<br>Analyse 100 % locale, rien n'est envoyé.</span>
         <input type="file" id="savfile" accept=".sav,.json">
       </div>
       <div class="nitbox" id="nitbox">
-        <div class="nithead">🌐 <b>Import direct depuis ton serveur Nitrado</b> <span>sans FTP, sans installation</span></div>
+        <div class="nithead"><span data-ico="globe" data-ico-size="16"></span> <b>Import direct depuis ton serveur Nitrado</b> <span>sans FTP, sans installation</span></div>
         <div class="toolrow" style="margin-top:0">
           <input type="password" class="searchbar" id="nitToken" placeholder="Token API Nitrado (long life token)" style="flex:1; margin-top:0">
-          <button class="togglebtn" id="nitGo">📥 Récupérer ma boîte</button>
-          <button class="togglebtn" id="nitShare" title="Copier un lien qui configure le token automatiquement">🔗 Lien pour ma guilde</button>
-          <button class="togglebtn" id="nitForget" title="Oublier le token et le chemin mémorisés">🗑</button>
+          <button class="togglebtn" id="nitGo" data-ico="download" data-ico-size="15">Récupérer ma boîte</button>
+          <button class="togglebtn" id="nitShare" data-ico="link" data-ico-size="15" title="Copier un lien qui configure le token automatiquement">Lien pour ma guilde</button>
+          <button class="togglebtn" id="nitForget" data-ico="trash" data-ico-size="15" title="Oublier le token et le chemin mémorisés"></button>
         </div>
         <div class="hint">Pour créer le token : connecte-toi sur nitrado.net, puis ouvre
         <a href="https://server.nitrado.net/en-US/developer/tokens" target="_blank" style="color:var(--accent2)">server.nitrado.net/en-US/developer/tokens</a>
@@ -182,7 +168,7 @@
         puis copie le long code affiché. Le token reste dans ton navigateur et ne parle qu'à api.nitrado.net.</div>
         <div id="nitStatus"></div>
       </div>
-      <div class="warnbox" style="margin-top:12px">⚠️ <b>Important :</b> les pals rangés dans le <b>coffre à pals de guilde</b> (stockage global) ne sont pas
+      <div class="warnbox" style="margin-top:12px"><span data-ico="alert" data-ico-size="16"></span> <b>Important :</b> les pals rangés dans le <b>coffre à pals de guilde</b> (stockage global) ne sont pas
         détectables dans la sauvegarde pour l'instant. Avant d'importer, place les pals qui comptent dans <b>ta boîte à pals personnelle</b> (ou ton équipe / une base).</div>
       <div id="importResult"></div>
       <div class="palgrid" id="mineGrid"></div>
@@ -226,7 +212,7 @@
       ou un pal conseillé pour ouvrir sa fiche.</div>
       <div id="metaFilters"></div>
       <div id="metaList"></div>
-      <div class="infobox">🧪 Pour obtenir ces passifs : capture de pals sauvages, <b>Yakumo</b> (copie les passifs éligibles),
+      <div class="infobox"><span data-ico="flask" data-ico-size="16"></span> Pour obtenir ces passifs : capture de pals sauvages, <b>Yakumo</b> (copie les passifs éligibles),
       élevage ciblé (garde des parents « propres », 2+2 ou 3+1), <b>Gâteau spécial</b> pour l'héritage multiple,
       <b>œufs sinistres</b> de l'Arbre-Monde pour les passifs ★5, <b>œufs mutés</b> (Immortel, Anomalie, Baby-sitter,
       Blindage, Marche Céleste) et la <b>table de chirurgie</b> avec les implants jetables.</div>
@@ -240,7 +226,7 @@
       <div id="mapStatus"></div>
       <div id="mapFilters"></div>
       <div class="mapwrap"><div id="mapCanvas"></div>
-        <div class="mapinfo">📍 <span id="mapCoords">—</span> · <span id="mapSource"></span>
+        <div class="mapinfo"><span data-ico="pin" data-ico-size="14"></span> <span id="mapCoords">—</span> · <span id="mapSource"></span>
         · <b id="mapShown">0</b> marqueurs affichés</div>
       </div>
       <div class="count-info" style="text-align:right">Fonds de carte : <a href="https://paldb.cc" target="_blank" style="color:var(--accent2)">paldb.cc</a>

@@ -13,9 +13,10 @@ const WORK_FR = { EmitFlame: "Allumage", Watering: "Arrosage", Seeding: "Plantat
   GenerateElectricity: "Électricité", Handcraft: "Artisanat", Collection: "Récolte",
   Deforest: "Abattage", Mining: "Extraction", OilExtraction: "Pétrole",
   ProductMedicine: "Médicaments", Cool: "Refroidissement", Transport: "Transport", MonsterFarm: "Ranch" };
-const WORK_ICON = { EmitFlame: "🔥", Watering: "💧", Seeding: "🌱", GenerateElectricity: "⚡",
-  Handcraft: "🔨", Collection: "🧺", Deforest: "🪓", Mining: "⛏️", OilExtraction: "🛢️",
-  ProductMedicine: "💊", Cool: "❄️", Transport: "📦", MonsterFarm: "🥚" };
+const WORK_ICO = { EmitFlame: "flask", Watering: "water", Seeding: "seed", GenerateElectricity: "bolt",
+  Handcraft: "hammer", Collection: "basket", Deforest: "axe", Mining: "pick", OilExtraction: "barrel",
+  ProductMedicine: "potion", Cool: "snow", Transport: "box", MonsterFarm: "egg" };
+const WORK_ICON = Object.fromEntries(Object.entries(WORK_ICO).map(([k, v]) => [k, ico(v, 14)]));
 const SIZE_FR = { S: "Petit", M: "Moyen", L: "Grand", XL: "Très grand", None: "—" };
 
 let PSP_PALS = null;               /* tribe -> détails */
@@ -168,12 +169,12 @@ function showPalSheet(id){
     .map(([w, v]) => `<div class="wrow">${WORK_ICON[w]} ${WORK_FR[w]} <b>${"★".repeat(v)}</b></div>`).join("") || `<div class="wrow" style="color:var(--muted)">Aucune aptitude de travail</div>`;
   const sc = p.scaling || {};
   const tags = [];
-  if (p.nocturnal) tags.push("🌙 Nocturne");
-  if (p.predator) tags.push("💀 Prédateur");
-  if (p.is_boss) tags.push("👑 Alpha");
-  if (p.is_tower_boss) tags.push("🗼 Boss de tour");
-  if (p.is_raid_boss) tags.push("⚔️ Boss de raid");
-  if (p.edible) tags.push("🍖 Comestible");
+  if (p.nocturnal) tags.push("Nocturne");
+  if (p.predator) tags.push("Prédateur");
+  if (p.is_boss) tags.push("Alpha");
+  if (p.is_tower_boss) tags.push("Boss de tour");
+  if (p.is_raid_boss) tags.push("Boss de raid");
+  if (p.edible) tags.push("Comestible");
   const body = `
     <div class="sheet-head">
       ${icon(id, "big", 72)}
@@ -196,7 +197,7 @@ function showPalSheet(id){
       <div class="sbox"><div class="slabel">Aptitudes de travail</div>${works}</div>
     </div>
     <div class="toolrow">
-      <button class="togglebtn" data-goto="${id}">🥚 Comment l'obtenir par élevage</button>
+      <button class="togglebtn" data-goto="${id}">${ico("egg",15)} Comment l'obtenir par élevage</button>
       <button class="togglebtn" data-own="${id}">${owned.has(id) ? "✓ Dans ma collection" : "+ Ajouter à ma collection"}</button>
     </div>`;
   openModal(P.name, body);
