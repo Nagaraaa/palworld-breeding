@@ -677,3 +677,11 @@ footer{border-top:1px solid var(--border); color:var(--dim);}
 .sheet-tags .tag{font-family:var(--f-mono); font-size:10px; letter-spacing:.09em; text-transform:uppercase;}
 .pw{color:var(--dim); font-size:11px;}
 .metahead .mi{color:var(--accent); display:inline-flex; align-items:center;}
+
+/* --- correctifs nav --- */
+.tabs{max-width:none; padding:8px max(16px, calc((100vw - 1180px)/2)); gap:18px;}
+.navgrp{background:transparent; border:0; border-radius:0; padding:0;}
+.tabs.scrolled .navgrp{border-color:transparent;}
+.tab{padding:6px 10px; font-size:13px;}
+.tab.active{background:rgba(62,240,164,.07); border-color:transparent; box-shadow:inset 0 -2px 0 var(--accent);}
+@media (max-width:1000px){ .tabs{gap:12px;} .navlbl{display:none;} }

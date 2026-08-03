@@ -106,7 +106,7 @@ try {
     if (m.type === "index"){
       INDEX = m.idx;
       indexResolvers.forEach(r => r(INDEX)); indexResolvers = [];
-      document.getElementById("workerState").textContent = "⚡ index prêt (" + Object.keys(INDEX).length + " pals · calcul en arrière-plan)";
+      document.getElementById("workerState").textContent = "index prêt · " + Object.keys(INDEX).length + " pals";
       setTimeout(() => document.getElementById("workerState").textContent = "", 4000);
     } else if (m.type === "closure" && m.seq === closureSeq && closureCb){
       closureCb(m.res);
