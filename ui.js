@@ -9,7 +9,13 @@ function makePicker(containerId, labelText, onChange, opts = {}){
   const el = document.getElementById(containerId);
   const ids = opts.ids || SORTED_IDS;
   let value = null;
-  el.innerHTML = `
+  const inline = !!opts.inline;
+  el.classList.toggle("inline", inline);
+  el.innerHTML = inline ? `
+    <input class="inlineinp" type="text" autocomplete="off" spellcheck="false"
+           placeholder="${opts.placeholder || "Rechercher un pal…"}">
+    <button class="clearbtn" type="button" title="Effacer">✕</button>
+    <div class="dropdown"><div class="optlist"></div></div>` : `
     <label>${labelText}</label>
     <button class="pickbtn" type="button"><span class="ph">${opts.placeholder || "Choisir un pal…"}</span></button>
     <button class="clearbtn" type="button" title="Effacer">✕</button>
@@ -17,9 +23,10 @@ function makePicker(containerId, labelText, onChange, opts = {}){
       <input type="text" placeholder="Rechercher… (recherche floue)">
       <div class="optlist"></div>
     </div>`;
-  const btn = el.querySelector(".pickbtn"), dd = el.querySelector(".dropdown"),
-        inp = dd.querySelector("input"), list = dd.querySelector(".optlist"),
-        clearBtn = el.querySelector(".clearbtn");
+  const dd = el.querySelector(".dropdown"), list = dd.querySelector(".optlist"),
+        clearBtn = el.querySelector(".clearbtn"),
+        inp = inline ? el.querySelector(".inlineinp") : dd.querySelector("input"),
+        btn = inline ? inp : el.querySelector(".pickbtn");
   let selIndex = -1, shown = [];
   function render(filter){
     const f = norm(filter || "");
@@ -33,21 +40,32 @@ function makePicker(containerId, labelText, onChange, opts = {}){
       `<div class="opt${i===0?' sel':''}" data-id="${id}">${icon(id)}<span>${PALS[id].name}</span><span class="pw mono">${PALS[id].p}</span><span class="no">${palNo(id)}</span></div>`
     ).join("") || `<div class="opt" style="color:var(--muted)">Aucun résultat</div>`;
   }
-  function open(){ dd.classList.add("open"); inp.value = ""; render(""); setTimeout(() => inp.focus(), 10); }
+  function open(){
+    dd.classList.add("open");
+    if (!inline){ inp.value = ""; setTimeout(() => inp.focus(), 10); }
+    render(inline ? inp.value : "");
+  }
   function close(){ dd.classList.remove("open"); }
   function select(id, silent){
     value = id; close();
-    btn.innerHTML = `${icon(id, '', 34)}<span>${PALS[id].name}</span><span class="no">${palNo(id)}</span>`;
+    if (inline) inp.value = PALS[id].name;
+    else btn.innerHTML = `${icon(id, '', 34)}<span>${PALS[id].name}</span><span class="no">${palNo(id)}</span>`;
     el.classList.add("filled");
     if (!silent) onChange(id);
   }
-  btn.addEventListener("click", () => dd.classList.contains("open") ? close() : open());
+  if (inline){
+    inp.addEventListener("focus", open);
+    inp.addEventListener("click", () => dd.classList.contains("open") || open());
+  } else {
+    btn.addEventListener("click", () => dd.classList.contains("open") ? close() : open());
+  }
   clearBtn.addEventListener("click", () => {
     value = null; el.classList.remove("filled");
-    btn.innerHTML = `<span class="ph">${opts.placeholder || "Choisir un pal…"}</span>`;
+    if (inline){ inp.value = ""; close(); }
+    else btn.innerHTML = `<span class="ph">${opts.placeholder || "Choisir un pal…"}</span>`;
     onChange(null);
   });
-  inp.addEventListener("input", () => render(inp.value));
+  inp.addEventListener("input", () => { if (inline && !dd.classList.contains("open")) dd.classList.add("open"); render(inp.value); });
   inp.addEventListener("keydown", e => {
     if (e.key === "ArrowDown"){ selIndex = Math.min(selIndex + 1, shown.length - 1); }
     else if (e.key === "ArrowUp"){ selIndex = Math.max(selIndex - 1, 0); }
@@ -293,7 +311,7 @@ const pkHome = makePicker("pkHome", "", id => {
   if (!id) return;
   pkChild.set(id);
   switchTab("want");
-}, { placeholder: "Rechercher un pal…" });
+}, { inline: true, placeholder: "Rechercher un pal, Lamball, Renjishi, #042…" });
 
 /* ==================== 3. CHEMIN LE PLUS COURT ==================== */
 const pathOut = document.getElementById("pathResult");
