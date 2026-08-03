@@ -856,3 +856,5 @@ footer{border-top:1px solid var(--glass-brd); color:var(--dim); font-size:12px;}
 footer a{color:var(--accent-lo);}
 @media (prefers-reduced-motion:reduce){.mod:hover{transform:none;}}
 @media(max-width:640px){ .themebtn{margin-left:auto;} }
+.hb-end{margin-left:auto;}
+.foot-num{color:var(--muted); margin-bottom:6px;}
