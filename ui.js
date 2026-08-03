@@ -90,9 +90,20 @@ addEventListener("scroll", updateTabsBar, { passive: true });
 updateTabsBar();
 /* ==================== ONGLETS (View Transitions) ==================== */
 const TABS = ["home", "want", "breed", "path", "combos", "dex", "passives", "meta", "map", "mine"];
+const FAM_ELEVAGE = ["want", "breed", "path", "combos"];
+let currentTab = "home";
+function syncNav(name){
+  const fam = FAM_ELEVAGE.includes(name);
+  document.querySelectorAll(".tab").forEach(x =>
+    x.classList.toggle("active", fam ? x.dataset.fam === "elevage" : x.dataset.tab === name));
+  document.querySelectorAll(".stab").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
+  const sub = document.getElementById("subtabs");
+  if (sub) sub.classList.toggle("show", fam);
+}
 function switchTab(name){
   const doIt = () => {
-    document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
+    currentTab = name;
+    syncNav(name);
     document.querySelectorAll("section").forEach(x => x.classList.remove("visible"));
     document.getElementById("tab-" + name).classList.add("visible");
     if (name === "mine") initMineTab();
@@ -107,7 +118,10 @@ function switchTab(name){
   if (document.startViewTransition && !reduceMotion && !restoring) document.startViewTransition(doIt);
   else doIt();
 }
-document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
+document.querySelectorAll(".tab, .stab").forEach(t => t.addEventListener("click", () => {
+  if (t.dataset.fam === "elevage" && FAM_ELEVAGE.includes(currentTab)) return;
+  switchTab(t.dataset.tab);
+}));
 const logo = document.getElementById("logoHome");
 if (logo) logo.addEventListener("click", () => switchTab("home"));
 document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.go)));
@@ -127,7 +141,7 @@ addEventListener("keydown", e => {
 let restoring = false;
 function updateHash(){
   if (restoring) return;
-  const active = document.querySelector(".tab.active").dataset.tab;
+  const active = currentTab;
   const segs = [active];
   if (active === "breed"){ segs.push(pkA.get() || "", pkB.get() || ""); }
   else if (active === "want"){ segs.push(pkChild.get() || "", pkWith.get() || ""); }
@@ -555,5 +569,7 @@ function renderCombos(filter){
   document.getElementById("comboContent").innerHTML = html;
 }
 
-/* compteurs de la page d'accueil au premier affichage */
-if (document.querySelector("#tab-home.visible")) setTimeout(runHeroCounters, 400);
+/* état initial de la navigation */
+const startTab = document.querySelector("section.visible");
+currentTab = startTab ? startTab.id.replace("tab-", "") : "home";
+syncNav(currentTab);

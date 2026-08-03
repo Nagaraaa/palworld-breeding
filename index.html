@@ -37,27 +37,23 @@
 </header>
 
 <nav class="tabs">
-  <div class="navgrp"><span class="navlbl">Pal-Lab</span>
-    <button class="tab" data-tab="home" data-ico="home" data-ico-size="17"><span class="tlbl">Accueil</span></button>
-  </div>
-  <div class="navgrp"><span class="navlbl">Élevage</span>
-    <button class="tab active" data-tab="want" data-ico="target" data-ico-size="17"><span class="tlbl">Je veux ce pal</span></button>
-    <button class="tab" data-tab="breed" data-ico="breed" data-ico-size="17"><span class="tlbl">Croiser</span></button>
-    <button class="tab" data-tab="path" data-ico="path" data-ico-size="17"><span class="tlbl">Chemin</span></button>
-    <button class="tab" data-tab="combos" data-ico="spark" data-ico-size="17"><span class="tlbl">Combos</span></button>
-  </div>
-  <div class="navgrp"><span class="navlbl">Pals</span>
-    <button class="tab" data-tab="dex" data-ico="book" data-ico-size="17"><span class="tlbl">Paldex</span></button>
-    <button class="tab" data-tab="passives" data-ico="dna" data-ico-size="17"><span class="tlbl">Passifs</span></button>
-    <button class="tab" data-tab="meta" data-ico="trophy" data-ico-size="17"><span class="tlbl">Meta</span></button>
-  </div>
-  <div class="navgrp"><span class="navlbl">Monde</span>
-    <button class="tab" data-tab="map" data-ico="map" data-ico-size="17"><span class="tlbl">Carte</span></button>
-  </div>
-  <div class="navgrp"><span class="navlbl">Moi</span>
-    <button class="tab" data-tab="mine" data-ico="bag" data-ico-size="17"><span class="tlbl">Mes Pals</span><span class="cnt" id="ownedCnt">0</span></button>
+  <div class="tabs-in">
+    <button class="tab" data-tab="want" data-fam="elevage" data-ico="breed" data-ico-size="16"><span class="tlbl">Élevage</span></button>
+    <button class="tab" data-tab="dex" data-ico="book" data-ico-size="16"><span class="tlbl">Paldex</span></button>
+    <button class="tab" data-tab="passives" data-ico="dna" data-ico-size="16"><span class="tlbl">Passifs</span></button>
+    <button class="tab" data-tab="meta" data-ico="trophy" data-ico-size="16"><span class="tlbl">Meta</span></button>
+    <button class="tab" data-tab="map" data-ico="map" data-ico-size="16"><span class="tlbl">Carte</span></button>
+    <button class="tab tab-end" data-tab="mine" data-ico="bag" data-ico-size="16"><span class="tlbl">Ma collection</span><span class="cnt" id="ownedCnt">0</span></button>
   </div>
 </nav>
+<div class="subtabs" id="subtabs">
+  <div class="subtabs-in">
+    <button class="stab" data-tab="want">Je veux ce pal</button>
+    <button class="stab" data-tab="breed">Croiser deux pals</button>
+    <button class="stab" data-tab="path">Chemin le plus court</button>
+    <button class="stab" data-tab="combos">Combos spéciaux</button>
+  </div>
+</div>
 
 <main>
   <section id="tab-home" class="visible">
